@@ -1,0 +1,3 @@
+pub func fn(l: str) {}
+
+pub unsafe func fn(l: i32) -> u32 {}
