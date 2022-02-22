@@ -1,3 +1,15 @@
-pub func fn(l: str) {}
+import x;
+// yeah boi
+pub func fn(l: str) {
+    if true {
+        let x: i32 = 100;
+        old x; // free var x
+        let mut y = fn(34);
+        y = 69;
+        old y;
+        stringFn("Hello");
+    }
+}
 
+pub inline func stringFn(s: str) {}
 pub unsafe func fn(l: i32) -> u32 {}

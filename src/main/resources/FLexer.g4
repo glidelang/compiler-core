@@ -5,7 +5,7 @@ FUNCTION: 'func';
 EXTERNAL: 'ext';
 UNSAFE: 'unsafe';
 MUTABLE: 'mut';
-SET: 'set';
+LET: 'let';
 ASYNC: 'async';
 PUBLIC: 'pub';
 IMPORT: 'import';
@@ -18,6 +18,14 @@ INLINE: 'inline';
 OVERRIDE: 'override';
 CONST: 'const';
 STATIC: 'static';
+
+// control flow
+IF: 'if';
+ELSE: 'else';
+WHILE: 'while';
+LOOP: 'loop';
+FOR: 'for';
+IN: 'in';
 
 // integers and floats and primitives
 I8: 'i8';
@@ -346,4 +354,5 @@ URSHIFT_ASSIGN : '>>>=';
 
 IDENTIFIER
     :   [A-Za-z0-9]+
+    //: 'fn'
     ;

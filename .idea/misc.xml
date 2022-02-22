@@ -30,6 +30,14 @@
     <option name="show" value="ASK" />
     <option name="description" value="" />
   </component>
+  <component name="EntryPointsManager">
+    <list size="1">
+      <item index="0" class="java.lang.String" itemvalue="picocli.CommandLine.Parameters" />
+    </list>
+    <writeAnnotations>
+      <writeAnnotation name="picocli.CommandLine.Parameters" />
+    </writeAnnotations>
+  </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="JavaccProjectSettings">
     <option name="injectionSupportLevel" value="FULL" />

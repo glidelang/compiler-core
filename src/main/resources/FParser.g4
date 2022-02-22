@@ -4,28 +4,38 @@ options { tokenVocab=FLexer; }
 
 // init
 
-compilationUnit: function*;
+compilationUnit: line*;
+line: function | importStatement;
 
 // modifiers
 
 func_modifiers: PUBLIC | UNSAFE | EXTERNAL | STATIC | INLINE | MUTABLE | ASYNC | OVERRIDE;
-class_modifiers: PUBLIC | STATIC | OVERRIDE;
+variable_modifiers: STATIC | INLINE | MUTABLE;
 
 // real stuff
+
+importStatement: IMPORT IDENTIFIER ';';
 
 function: func_modifiers*? FUNCTION IDENTIFIER '(' formalParameterList ')' ('->' type)? block;
 
 formalParameterList: (formalParameter (',' formalParameter)*)?;
-
 formalParameter: IDENTIFIER COLON type;
+value: NullLiteral
+                | BooleanLiteral
+                | IntegerLiteral
+                | StringLiteral
+                | CharacterLiteral
+                | IDENTIFIER
+                | newStatement;
+passedParameterList: (value (',' value)*)?;
+newStatement: NEW IDENTIFIER;
+oldStatement: OLD IDENTIFIER ';';
 
 block: LBRACE body RBRACE;
-
 body: stmt* expr?;
-
-stmt: expr ';';
-
-expr: LPAREN '!' RPAREN;
+stmt: expr ';' | ifStatement | whileStatement | loopStatement | forStatement | importStatement | oldStatement;
+expr: assignment | valueExpr;
+valueExpr: methodCall | IDENTIFIER | value;
 
 type: IDENTIFIER |
         I8 |
@@ -40,4 +50,14 @@ type: IDENTIFIER |
         U128 |
         F32 |
         F64 |
+        STR |
         BOOL;
+
+methodCall: IDENTIFIER '(' passedParameterList ')';
+
+assignment: LET? variable_modifiers* IDENTIFIER (COLON type)? ASSIGN valueExpr;
+
+ifStatement: IF expr block;
+whileStatement: WHILE expr block;
+loopStatement: LOOP block;
+forStatement: FOR IDENTIFIER IN expr block;
