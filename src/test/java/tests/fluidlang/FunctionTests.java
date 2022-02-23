@@ -1,10 +1,11 @@
 package tests.fluidlang;
 
 import net.fluidlang.compiler.Main;
-import net.fluidlang.compiler.util.FFIUtils;
+import net.fluidlang.compiler.util.SymbolUtils;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FunctionTests {
 
@@ -12,11 +13,11 @@ public class FunctionTests {
 	public void test_name_mangling() {
 		System.out.println("Testing name mangling of functions in arbitrary file 'func.lq'\n");
 		System.out.println("ORIGINAL  : func hello() -> i32");
-		System.out.println("LQ_MANGLED: " + FFIUtils.mangle_function("func.lq", "i32", "hello", 0) + "\n");
+		System.out.println("LQ_MANGLED: " + SymbolUtils.mangle_function("func.lq", "i32", "hello", 0) + "\n");
 		System.out.println("ORIGINAL  : func hello(i32) -> i32");
-		System.out.println("LQ_MANGLED: " + FFIUtils.mangle_function("func.lq", "i32", "hello", 1) + "\n");
+		System.out.println("LQ_MANGLED: " + SymbolUtils.mangle_function("func.lq", "i32", "hello", 1) + "\n");
 		System.out.println("ORIGINAL  : func hellos() -> i64");
-		System.out.println("LQ_MANGLED: " + FFIUtils.mangle_function("func.lq", "i64", "hellos", 0) + "\n");
+		System.out.println("LQ_MANGLED: " + SymbolUtils.mangle_function("func.lq", "i64", "hellos", 0) + "\n");
 	}
 
 	@Test

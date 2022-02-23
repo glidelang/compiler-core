@@ -31,11 +31,13 @@
     <option name="description" value="" />
   </component>
   <component name="EntryPointsManager">
-    <list size="1">
-      <item index="0" class="java.lang.String" itemvalue="picocli.CommandLine.Parameters" />
+    <list size="2">
+      <item index="0" class="java.lang.String" itemvalue="picocli.CommandLine.Option" />
+      <item index="1" class="java.lang.String" itemvalue="picocli.CommandLine.Parameters" />
     </list>
     <writeAnnotations>
       <writeAnnotation name="picocli.CommandLine.Parameters" />
+      <writeAnnotation name="picocli.CommandLine.Option" />
     </writeAnnotations>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />

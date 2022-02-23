@@ -1,11 +1,15 @@
 package net.fluidlang.compiler;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.fluidlang.compiler.ast.*;
 import net.fluidlang.compiler.err.LiquidErrorHandler;
+import net.fluidlang.compiler.err.SemanticAnalyzer;
+import net.fluidlang.compiler.util.CompilerLogger;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.fusesource.jansi.AnsiConsole;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import picocli.CommandLine;
@@ -27,6 +31,14 @@ public class Main implements Callable<Integer> {
 
 	@Parameters
 	private static Set<Path> targets;
+
+	@Getter
+	@Option(names = {"--ansi-color", "-c"})
+	private static boolean ansi;
+
+	@Getter
+	@Option(names = {"--verbose", "-V"})
+	private static boolean verbose;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new Main()).execute(args));
@@ -64,34 +76,29 @@ public class Main implements Callable<Integer> {
 			return 1;
 		}
 
-		return parse(mainTarget);
+		parse(mainTarget);
+		if(ansi) AnsiConsole.systemUninstall();
+		if(LiquidErrorHandler.errors >= 1) CompilerLogger.terminate(LiquidErrorHandler.errors + " errors found");
+		return 0;
 	}
 
 	@SneakyThrows
 	@VisibleForTesting
-	public static int parse(@NotNull Path origin) {
+	public static void parse(@NotNull Path origin) {
 		var lex = new FLexer(CharStreams.fromPath(origin));
 		lex.removeErrorListeners();
 		lex.addErrorListener(LiquidErrorHandler.INSTANCE);
 		var parser = new FParser(new CommonTokenStream(lex));
 		parser.removeErrorListeners();
 		parser.addErrorListener(LiquidErrorHandler.INSTANCE);
-		new ParseTreeWalker().walk(new TestWalker(),parser.compilationUnit());
-		if(!LiquidErrorHandler.INSTANCE.getErrors().isEmpty()) {
-			for(String s : LiquidErrorHandler.INSTANCE.getErrors()) {
-				System.err.println(s + "\n");
-			}
-			System.err.println("compilation terminated.");
-			return 1;
-		}
-		return 0;
+		new ParseTreeWalker().walk(new SemanticAnalyzer(), parser.compilationUnit());
 	}
 
 	private static final class TestWalker extends FParserBaseListener {
 
 		@Override
 		public void enterFunction(FParser.FunctionContext ctx) {
-			System.out.println("(FUNC) Entered function '" + ctx.IDENTIFIER() + "' with return type '" + (ctx.type() != null ? ctx.type().getText() : "()") + "'");
+			System.out.println("(FUNC) Entered function '" + ctx.IDENTIFIER() + "' with return type '" + (ctx.type() != null ? ctx.type().getText() : "void") + "'");
 		}
 
 		@Override

@@ -12,5 +12,5 @@ pub func fn(l: str) {
 }
 
 pub inline func stringFn(s: str) {}
-pub unsafe func fn(l: i32) -> u32 {
+pub unsafe unsafe func fn(l: i32) -> u32 {
 }

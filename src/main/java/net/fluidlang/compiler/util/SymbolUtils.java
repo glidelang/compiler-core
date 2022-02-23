@@ -1,20 +1,24 @@
 package net.fluidlang.compiler.util;
 
 import lombok.SneakyThrows;
+import net.fluidlang.compiler.ast.FParser;
+import org.antlr.v4.runtime.RuleContext;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Base64;
 
-public final class FFIUtils {
+public final class SymbolUtils {
 
 	@NotNull
 	private static final MessageDigest digest = algo();
 
-	private FFIUtils() {
+	private SymbolUtils() {
 		//no instance
 	}
 
@@ -39,6 +43,13 @@ public final class FFIUtils {
 	@Contract(pure = true)
 	public static @NotNull String mangle_function(@NotNull String filename, @NotNull String return_type, @NotNull String name, int param_overload_count) {
 		return "f" + toHex(Base64.getEncoder().encodeToString(digest.digest(filename.getBytes(StandardCharsets.UTF_8)))) + "_" + return_type + "_" + name + "" + param_overload_count;
+	}
+
+	public static String functionToString(FParser.FunctionContext context) {
+		return Arrays.toString(context.func_modifiers().stream().map(RuleContext::getText).toArray()).replace("[", "").replace("]", " ").replace(",", "")
+				+ context.IDENTIFIER() + "("
+				+ StringUtils.removeEnd(StringUtils.removeStart(Arrays.toString(context.formalParameterList().formalParameter().stream().map(formalParameterContext -> formalParameterContext.type().getText()).toArray()), "["), "]") + ") returning "
+				+ (context.type() == null ? "void" : context.type().getText());
 	}
 
 	@NotNull
