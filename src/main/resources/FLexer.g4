@@ -18,6 +18,11 @@ INLINE: 'inline';
 OVERRIDE: 'override';
 CONST: 'const';
 STATIC: 'static';
+RETURN: 'return';
+DROPLET: 'droplet';
+STRUCT: 'struct';
+INTF: 'intf';
+ENUM: 'enum';
 
 // control flow
 IF: 'if';

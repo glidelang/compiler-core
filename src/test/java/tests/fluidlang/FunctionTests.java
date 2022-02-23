@@ -1,7 +1,6 @@
 package tests.fluidlang;
 
 import net.fluidlang.compiler.Main;
-import net.fluidlang.compiler.llvmgen.NativeCode;
 import net.fluidlang.compiler.util.FFIUtils;
 import org.junit.jupiter.api.Test;
 
@@ -22,12 +21,7 @@ public class FunctionTests {
 
 	@Test
 	public void test_func_parsing() {
-		Main.parse(Paths.get("src/test/resources/test.lq"));
+		Main.parse(Paths.get("src/test/resources/main.lq"));
 	}
-
-//	@Test
-//	public void test_emit() {
-//		NativeCode.emit();
-//	}
 
 }

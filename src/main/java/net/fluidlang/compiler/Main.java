@@ -1,9 +1,7 @@
 package net.fluidlang.compiler;
 
 import lombok.SneakyThrows;
-import net.fluidlang.compiler.ast.FLexer;
-import net.fluidlang.compiler.ast.FParser;
-import net.fluidlang.compiler.ast.FParserBaseListener;
+import net.fluidlang.compiler.ast.*;
 import net.fluidlang.compiler.err.LiquidErrorHandler;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -12,9 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -39,17 +35,24 @@ public class Main implements Callable<Integer> {
 	@Override
 	@SneakyThrows
 	public Integer call() {
+		if(targets == null) {
+			System.err.println("liqc: no input files");
+			System.err.println("compilation terminated.");
+			return 1;
+		}
 		boolean has_good_file = false;
 		Path mainTarget = null;
 		for(Path p : targets) {
 			if(!p.getFileName().toString().endsWith(".lq")) {
 				System.err.println("liqc: files must end with the .lq extension");
-				System.err.println("liqc: compilation terminated");
+				System.err.println("compilation terminated.");
+				return 1;
 			}
 			if(p.getFileName().toString().equals("main.lq") || p.getFileName().toString().equals("lib.lq")) {
 				if(has_good_file) {
 					System.err.println("liqc: main.lq and lib.lq exist; there can only be one of them");
-					System.err.println("liqc: compilation terminated");
+					System.err.println("compilation terminated.");
+					return 1;
 				}
 				has_good_file = true;
 				mainTarget = p;
@@ -57,10 +60,10 @@ public class Main implements Callable<Integer> {
 		}
 		if(!has_good_file) {
 			System.err.println("liqc: no main.lq or lib.lq present");
-			System.err.println("liqc: compilation terminated");
+			System.err.println("compilation terminated.");
+			return 1;
 		}
 
-		assert mainTarget != null;
 		return parse(mainTarget);
 	}
 
@@ -78,6 +81,7 @@ public class Main implements Callable<Integer> {
 			for(String s : LiquidErrorHandler.INSTANCE.getErrors()) {
 				System.err.println(s + "\n");
 			}
+			System.err.println("compilation terminated.");
 			return 1;
 		}
 		return 0;
