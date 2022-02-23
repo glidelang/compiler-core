@@ -1,7 +1,6 @@
 package net.fluidlang.compiler.err;
 
-import net.fluidlang.compiler.ast.FParser;
-import net.fluidlang.compiler.ast.FParserBaseListener;
+import net.fluidlang.compiler.ast.*;
 import net.fluidlang.compiler.util.SymbolUtils;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -28,10 +27,20 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	@Override
 	public void enterFunction(FParser.FunctionContext ctx) {
+
 		// firstly, check for duplicate modifiers
 		if(hasDuplicateRuleContext(ctx.func_modifiers())) {
 			error("duplicate modifiers in function: " + SymbolUtils.functionToString(ctx) + "");
 			LiquidErrorHandler.errors++;
 		}
+
+		// check if the function returns a value
+		if(ctx.type() != null) {
+			if(ctx.block().body().returnStatement() == null) {
+				error("missing return statement in function: " + SymbolUtils.functionToString(ctx) + "");
+				LiquidErrorHandler.errors++;
+			}
+		}
+
 	}
 }

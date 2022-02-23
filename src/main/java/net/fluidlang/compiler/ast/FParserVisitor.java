@@ -137,6 +137,18 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIfStatement(FParser.IfStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#elseIfStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseIfStatement(FParser.ElseIfStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#elseStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseStatement(FParser.ElseStatementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#whileStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

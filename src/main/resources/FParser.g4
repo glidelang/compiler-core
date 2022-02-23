@@ -57,11 +57,13 @@ methodCall: IDENTIFIER '(' passedParameterList ')';
 
 assignment: LET? variable_modifiers* IDENTIFIER (COLON type)? ASSIGN valueExpr;
 
-ifStatement: IF expr block;
-whileStatement: WHILE expr block;
+ifStatement: IF valueExpr block elseIfStatement* elseStatement?;
+elseIfStatement: ELSE IF valueExpr block;
+elseStatement: ELSE block;
+whileStatement: WHILE valueExpr block;
 loopStatement: LOOP block;
-forStatement: FOR IDENTIFIER IN expr block;
-returnStatement: RETURN valueExpr;
+forStatement: FOR IDENTIFIER IN valueExpr block;
+returnStatement: RETURN valueExpr ';'? | valueExpr;
 
 dropletBlock: LBRACE dropletBody RBRACE;
 dropletVarModifiers: STATIC | MUTABLE;
