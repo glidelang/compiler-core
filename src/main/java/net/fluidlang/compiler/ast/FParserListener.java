@@ -208,6 +208,16 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitAssignment(FParser.AssignmentContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FParser#reassignment}.
+	 * @param ctx the parse tree
+	 */
+	void enterReassignment(FParser.ReassignmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#reassignment}.
+	 * @param ctx the parse tree
+	 */
+	void exitReassignment(FParser.ReassignmentContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FParser#ifStatement}.
 	 * @param ctx the parse tree
 	 */

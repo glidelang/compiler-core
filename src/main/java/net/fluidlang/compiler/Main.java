@@ -52,7 +52,8 @@ public class Main implements Callable<Integer> {
 			System.err.println("compilation terminated.");
 			return 1;
 		}
-		boolean has_good_file = false;
+		boolean hasOrigin = false;
+		boolean compilingLib = false;
 		Path mainTarget = null;
 		for(Path p : targets) {
 			if(!p.getFileName().toString().endsWith(".lq")) {
@@ -61,20 +62,23 @@ public class Main implements Callable<Integer> {
 				return 1;
 			}
 			if(p.getFileName().toString().equals("main.lq") || p.getFileName().toString().equals("lib.lq")) {
-				if(has_good_file) {
+				if(!compilingLib && p.getFileName().toString().equals("lib.lq")) compilingLib = true;
+				if(hasOrigin) {
 					System.err.println("liqc: main.lq and lib.lq exist; there can only be one of them");
 					System.err.println("compilation terminated.");
 					return 1;
 				}
-				has_good_file = true;
+				hasOrigin = true;
 				mainTarget = p;
 			}
 		}
-		if(!has_good_file) {
+		if(!hasOrigin) {
 			System.err.println("liqc: no main.lq or lib.lq present");
 			System.err.println("compilation terminated.");
 			return 1;
 		}
+
+		CompilerLogger.info("compiling library from " + targets.size() + " modules");
 
 		parse(mainTarget);
 		if(ansi) AnsiConsole.systemUninstall();

@@ -45,7 +45,8 @@ public final class SymbolUtils {
 		return "f" + toHex(Base64.getEncoder().encodeToString(digest.digest(filename.getBytes(StandardCharsets.UTF_8)))) + "_" + return_type + "_" + name + "" + param_overload_count;
 	}
 
-	public static String functionToString(FParser.FunctionContext context) {
+	@Contract(pure = true)
+	public static @NotNull String functionToString(FParser.@NotNull FunctionContext context) {
 		return Arrays.toString(context.func_modifiers().stream().map(RuleContext::getText).toArray()).replace("[", "").replace("]", " ").replace(",", "")
 				+ context.IDENTIFIER() + "("
 				+ StringUtils.removeEnd(StringUtils.removeStart(Arrays.toString(context.formalParameterList().formalParameter().stream().map(formalParameterContext -> formalParameterContext.type().getText()).toArray()), "["), "]") + ") returning "

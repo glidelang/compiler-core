@@ -5,7 +5,7 @@ options { tokenVocab=FLexer; }
 // init
 
 compilationUnit: line*;
-line: function | importStatement | dropletDecl;
+line: function | importStatement | dropletDecl | assignment;
 
 // modifiers
 
@@ -34,7 +34,7 @@ oldStatement: OLD IDENTIFIER ';';
 block: LBRACE body RBRACE;
 body: stmt* returnStatement?;
 stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | oldStatement;
-expr: assignment | valueExpr;
+expr: assignment | valueExpr | reassignment;
 valueExpr: methodCall | IDENTIFIER | value | ifStatement;
 
 type: IDENTIFIER |
@@ -55,7 +55,8 @@ type: IDENTIFIER |
 
 methodCall: IDENTIFIER '(' passedParameterList ')';
 
-assignment: LET? variable_modifiers* IDENTIFIER (COLON type)? ASSIGN valueExpr;
+assignment: LET variable_modifiers* IDENTIFIER (COLON type)? ASSIGN valueExpr;
+reassignment: IDENTIFIER ASSIGN valueExpr;
 
 ifStatement: IF valueExpr block elseIfStatement* elseStatement?;
 elseIfStatement: ELSE IF valueExpr block;

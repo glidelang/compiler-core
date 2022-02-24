@@ -1,14 +1,19 @@
-import x;
+/*
+ *  THIS PROGRAM IS DESIGNED TO NOT BE A PROGRAM
+ *  IT IS SUPPOSED TO FAIL
+ */
+
+import x; // to-do check import symbols
 // yeah boi
 pub func fn(l: str) {
-    if true {
-        let x: i32 = 100;
-        old x; // free var x
-        let mut y = fn(34);
-        y = 69;
-        old y;
-        stringFn("Hello");
-    }
+    if true { let x: i32 = 100;
+    old x; // free var x
+    let mut y = fn(34);
+    y = 69;
+    old y;
+    z = 1;
+    stringFn("Hello");
+    stringX(); }
 }
 
 pub inline inline func stringFn(s: str) {}

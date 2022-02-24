@@ -256,6 +256,18 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterReassignment(FParser.ReassignmentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitReassignment(FParser.ReassignmentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterIfStatement(FParser.IfStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}

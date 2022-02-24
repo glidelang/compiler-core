@@ -131,6 +131,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAssignment(FParser.AssignmentContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#reassignment}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReassignment(FParser.ReassignmentContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#ifStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
