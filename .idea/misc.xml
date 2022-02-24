@@ -16,10 +16,10 @@
         <PerGrammarGenerationSettings>
           <option name="fileName" value="$PROJECT_DIR$/src/main/resources/FParser.g4" />
           <option name="autoGen" value="true" />
-          <option name="outputDir" value="C:\Users\gerar\OneDrive\Desktop\code\fluid-lang\compiler-core\src\main\java" />
+          <option name="outputDir" value="$PROJECT_DIR$/src/main/java/" />
           <option name="libDir" value="" />
           <option name="encoding" value="" />
-          <option name="pkg" value="net.fluidlang.compiler.ast" />
+          <option name="pkg" value="net.liquidlang.compiler.ast" />
           <option name="language" value="Java" />
           <option name="generateVisitor" value="true" />
         </PerGrammarGenerationSettings>
