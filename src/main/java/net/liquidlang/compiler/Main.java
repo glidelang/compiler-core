@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -83,7 +84,13 @@ public class Main implements Callable<Integer> {
 	@SneakyThrows
 	@VisibleForTesting
 	public static void parse(@NotNull Path origin) {
-		var lex = new FLexer(CharStreams.fromPath(origin));
+		FLexer lex;
+		try {
+			lex = new FLexer(CharStreams.fromPath(origin));
+		} catch (NoSuchFileException exception) {
+			CompilerLogger.terminate(String.format("File not found: %s", origin));
+			return;
+		}
 		lex.removeErrorListeners();
 		lex.addErrorListener(LiquidErrorHandler.INSTANCE);
 		var parser = new FParser(new CommonTokenStream(lex));
