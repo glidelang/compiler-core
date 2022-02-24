@@ -29,7 +29,7 @@ public final class CompilerLogger {
 
 	public static void error(String s, int line, int col, String file) {
 		if(Main.isAnsi()) {
-			stderr.println(Ansi.ansi().fg(Ansi.Color.WHITE).a("liqc: ").fg(Ansi.Color.RED).bold().a("error: ").reset().a(s + "\nat " + Paths.get(file).toAbsolutePath().toString().replace(File.separator, "/") + " " + line + ":" + col + ")\n").reset().toString());
+			stderr.println(Ansi.ansi().fg(Ansi.Color.WHITE).a("liqc: ").fg(Ansi.Color.RED).bold().a("error: ").reset().a(s + "\nat " + Paths.get(file).toAbsolutePath().toString().replace(File.separator, "/") + " " + line + ":" + col + "\n").reset().toString());
 		} else {
 			stderr.println("liqc: error: " + s);
 		}
