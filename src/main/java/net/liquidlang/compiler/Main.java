@@ -48,8 +48,7 @@ public class Main implements Callable<Integer> {
 	@SneakyThrows
 	public Integer call() {
 		if(targets == null) {
-			System.err.println("liqc: no input files");
-			System.err.println("compilation terminated.");
+			CompilerLogger.terminate("no input files");
 			return 1;
 		}
 		boolean hasOrigin = false;
@@ -57,24 +56,19 @@ public class Main implements Callable<Integer> {
 		Path mainTarget = null;
 		for(Path p : targets) {
 			if(!p.getFileName().toString().endsWith(".lq")) {
-				System.err.println("liqc: files must end with the .lq extension");
-				System.err.println("compilation terminated.");
-				return 1;
+				CompilerLogger.terminate("files must end with the .lq extension");
 			}
 			if(p.getFileName().toString().equals("main.lq") || p.getFileName().toString().equals("lib.lq")) {
 				if(!compilingLib && p.getFileName().toString().equals("lib.lq")) compilingLib = true;
 				if(hasOrigin) {
-					System.err.println("liqc: main.lq and lib.lq exist; there can only be one of them");
-					System.err.println("compilation terminated.");
-					return 1;
+					CompilerLogger.terminate("main.lq and lib.lq exist; there can only be one of them");
 				}
 				hasOrigin = true;
 				mainTarget = p;
 			}
 		}
 		if(!hasOrigin) {
-			System.err.println("liqc: no main.lq or lib.lq present");
-			System.err.println("compilation terminated.");
+			CompilerLogger.terminate("no origin file main.lq or lib.lq present");
 			return 1;
 		}
 
