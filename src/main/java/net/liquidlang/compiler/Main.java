@@ -1,11 +1,11 @@
-package net.fluidlang.compiler;
+package net.liquidlang.compiler;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.fluidlang.compiler.ast.*;
-import net.fluidlang.compiler.err.LiquidErrorHandler;
-import net.fluidlang.compiler.err.SemanticAnalyzer;
-import net.fluidlang.compiler.util.CompilerLogger;
+import net.liquidlang.compiler.ast.*;
+import net.liquidlang.compiler.err.LiquidErrorHandler;
+import net.liquidlang.compiler.semantics.SemanticAnalyzer;
+import net.liquidlang.compiler.util.CompilerLogger;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;

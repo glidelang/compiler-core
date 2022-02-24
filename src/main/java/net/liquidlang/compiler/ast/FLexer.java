@@ -1,5 +1,5 @@
 // Generated from C:/Users/gerar/OneDrive/Desktop/code/fluid-lang/compiler-core/src/main/resources\FLexer.g4 by ANTLR 4.9.2
-package net.fluidlang.compiler.ast;
+package net.liquidlang.compiler.ast;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;

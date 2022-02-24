@@ -1,8 +1,8 @@
-package net.fluidlang.compiler.err;
+package net.liquidlang.compiler.semantics;
 
-import net.fluidlang.compiler.ast.*;
-import net.fluidlang.compiler.semantics.Scope;
-import net.fluidlang.compiler.util.SymbolUtils;
+import net.liquidlang.compiler.err.LiquidErrorHandler;
+import net.liquidlang.compiler.util.SymbolUtils;
+import net.liquidlang.compiler.ast.*;
 import org.antlr.v4.runtime.RuleContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static net.fluidlang.compiler.util.CompilerLogger.*;
+import static net.liquidlang.compiler.util.CompilerLogger.*;
 
 /**
  * Validates syntax and assignment.

@@ -1,11 +1,10 @@
-package tests.fluidlang;
+package tests.liquidlang;
 
-import net.fluidlang.compiler.Main;
-import net.fluidlang.compiler.util.SymbolUtils;
+import net.liquidlang.compiler.Main;
+import net.liquidlang.compiler.util.SymbolUtils;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FunctionTests {
 

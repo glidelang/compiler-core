@@ -1,8 +1,7 @@
-package net.fluidlang.compiler.util;
+package net.liquidlang.compiler.util;
 
-import net.fluidlang.compiler.Main;
+import net.liquidlang.compiler.Main;
 import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 
 import java.io.File;
 import java.io.PrintStream;

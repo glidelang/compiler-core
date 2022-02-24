@@ -1,8 +1,6 @@
-package net.fluidlang.compiler.semantics;
+package net.liquidlang.compiler.semantics;
 
-import net.fluidlang.compiler.ast.FParser;
-import net.fluidlang.compiler.err.LiquidErrorHandler;
-import net.fluidlang.compiler.util.CompilerLogger;
+import net.liquidlang.compiler.ast.FParser;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

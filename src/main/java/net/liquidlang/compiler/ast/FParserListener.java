@@ -1,5 +1,5 @@
 // Generated from C:/Users/gerar/OneDrive/Desktop/code/fluid-lang/compiler-core/src/main/resources\FParser.g4 by ANTLR 4.9.2
-package net.fluidlang.compiler.ast;
+package net.liquidlang.compiler.ast;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**

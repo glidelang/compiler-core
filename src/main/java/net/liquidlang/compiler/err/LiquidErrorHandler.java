@@ -1,6 +1,6 @@
-package net.fluidlang.compiler.err;
+package net.liquidlang.compiler.err;
 
-import net.fluidlang.compiler.util.CompilerLogger;
+import net.liquidlang.compiler.util.CompilerLogger;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
