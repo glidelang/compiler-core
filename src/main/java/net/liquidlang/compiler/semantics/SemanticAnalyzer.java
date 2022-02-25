@@ -1,14 +1,16 @@
 package net.liquidlang.compiler.semantics;
 
+import net.liquidlang.compiler.Main;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
+import net.liquidlang.compiler.util.CompilerLogger;
 import net.liquidlang.compiler.util.SymbolUtils;
 import net.liquidlang.compiler.ast.*;
 import org.antlr.v4.runtime.RuleContext;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static net.liquidlang.compiler.util.CompilerLogger.*;
 
@@ -18,6 +20,7 @@ import static net.liquidlang.compiler.util.CompilerLogger.*;
 public class SemanticAnalyzer extends FParserBaseListener {
 
 	private Scope currentScope = null;
+	private static final List<String> circularDependencyPrevention = new ArrayList<>();
 
 	private boolean hasDuplicateRuleContext(@NotNull List<? extends RuleContext> listContainingDuplicates) {
 		Set<String> set1 = new HashSet<>();
@@ -85,7 +88,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 		// check for existing variable in current scope
 		if(currentScope.variableMap.containsKey(ctx.IDENTIFIER().getText())) {
-			error("cannot declare a variable with the same name: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			error("cannot declare a variable with the same name: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		} else {
 			// add to the current scope
@@ -104,5 +107,37 @@ public class SemanticAnalyzer extends FParserBaseListener {
 			LiquidErrorHandler.errors++;
 		}
 
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private <T> @NotNull Set<T> findDuplicates(@NotNull Collection<T> collection) {
+		Set<T> duplicates = new LinkedHashSet<>();
+		Set<T> uniques = new HashSet<>();
+		for(T t : collection) {
+			if(!uniques.add(t)) {
+				duplicates.add(t);
+			}
+		}
+		return duplicates;
+	}
+
+	@Override
+	public void enterImportStatement(FParser.ImportStatementContext ctx) {
+		if(ImportManager.isLocalImport(ctx)) {
+			var x = ctx.IDENTIFIER().get(ctx.IDENTIFIER().size() - 1).getText();
+			if(!ImportManager.isContainedLocally(x)){
+				error("unknown local module: " + x, ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				LiquidErrorHandler.errors++;
+			} else {
+				circularDependencyPrevention.add("'" + StringUtils.removeEnd(Paths.get(ctx.start.getTokenSource().getSourceName()).getFileName().toString(), ".lq") + "'");
+				if(!findDuplicates(circularDependencyPrevention).isEmpty()) {
+					var arr = circularDependencyPrevention.stream().distinct().toArray(String[]::new);
+					CompilerLogger.error("circular dependency in modules " + Arrays.toString(arr), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					LiquidErrorHandler.errors++;
+				} else {
+					Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
+				}
+			}
+		}
 	}
 }

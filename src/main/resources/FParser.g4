@@ -14,7 +14,7 @@ variable_modifiers: STATIC | INLINE | MUTABLE;
 
 // real stuff
 
-importStatement: IMPORT IDENTIFIER ';';
+importStatement: IMPORT (IDENTIFIER | MODULE) COLONCOLON (IDENTIFIER | '*') (COLONCOLON (IDENTIFIER | '*'))* ';';
 
 function: func_modifiers*? FUNCTION IDENTIFIER '(' formalParameterList ')' ('->' type)? block;
 
@@ -51,6 +51,7 @@ type: IDENTIFIER |
         F32 |
         F64 |
         STR |
+        VOID |
         BOOL;
 
 methodCall: IDENTIFIER '(' passedParameterList ')';
