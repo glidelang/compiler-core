@@ -2,7 +2,8 @@ package net.liquidlang.compiler;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.liquidlang.compiler.ast.*;
+import net.liquidlang.compiler.ast.FLexer;
+import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
 import net.liquidlang.compiler.semantics.SemanticAnalyzer;
 import net.liquidlang.compiler.util.CompilerLogger;
@@ -11,11 +12,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.fusesource.jansi.AnsiConsole;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Callable;
