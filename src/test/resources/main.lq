@@ -8,6 +8,7 @@ import x; // to-do check import symbols
 pub func fn(l: str) {
     if true { let x: i32 = 100;
     old x; // free var x
+    y = 1;
     let mut y = fn(34);
     y = 69;
     old y;

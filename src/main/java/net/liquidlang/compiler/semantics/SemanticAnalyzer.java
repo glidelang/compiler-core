@@ -64,15 +64,8 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	}
 
-	@Override
-	public void enterBody(FParser.BodyContext ctx) {
-		currentScope = currentScope.childFunction(ctx);
-	}
-
-	@Override
-	public void exitFunction(FParser.FunctionContext ctx) {
-		currentScope = currentScope.parent();
-	}
+	@Override public void enterBody(FParser.BodyContext ctx) { currentScope = currentScope.child(); }
+	@Override public void exitBody(FParser.BodyContext ctx) { currentScope = currentScope.parent(); }
 
 	// ================================================================================== destroy-scope (body)
 
@@ -83,6 +76,20 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		if(currentScope.resolve_function(ctx.IDENTIFIER().getText()) == null) {
 			error("unknown function: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
+		}
+
+	}
+
+	@Override
+	public void enterAssignment(FParser.AssignmentContext ctx) {
+
+		// check for existing variable in current scope
+		if(currentScope.variableMap.containsKey(ctx.IDENTIFIER().getText())) {
+			error("cannot declare a variable with the same name: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			LiquidErrorHandler.errors++;
+		} else {
+			// add to the current scope
+			currentScope.variableMap.put(ctx.IDENTIFIER().getText(), LiquidType.fromAssignmentContext(ctx));
 		}
 
 	}
