@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Set;
@@ -57,6 +58,9 @@ public class Main implements Callable<Integer> {
 		boolean compilingLib = false;
 		Path mainTarget = null;
 		for(Path p : targets) {
+			if(Files.notExists(p)) {
+				CompilerLogger.terminate(String.format("file not found: %s", p));
+			}
 			if(!p.getFileName().toString().endsWith(".lq")) {
 				CompilerLogger.terminate("files must end with the .lq extension");
 			}
@@ -84,42 +88,13 @@ public class Main implements Callable<Integer> {
 
 	@SneakyThrows
 	public static void parse(@NotNull Path origin) {
-		FLexer lex;
-		try {
-			lex = new FLexer(CharStreams.fromPath(origin));
-		} catch (NoSuchFileException exception) {
-			CompilerLogger.terminate(String.format("File not found: %s", origin));
-			return;
-		}
+		FLexer lex = new FLexer(CharStreams.fromPath(origin));
 		lex.removeErrorListeners();
 		lex.addErrorListener(LiquidErrorHandler.INSTANCE);
 		var parser = new FParser(new CommonTokenStream(lex));
 		parser.removeErrorListeners();
 		parser.addErrorListener(LiquidErrorHandler.INSTANCE);
 		new ParseTreeWalker().walk(new SemanticAnalyzer(), parser.compilationUnit());
-	}
-
-	private static final class TestWalker extends FParserBaseListener {
-
-		@Override
-		public void enterFunction(FParser.FunctionContext ctx) {
-			System.out.println("(FUNC) Entered function '" + ctx.IDENTIFIER() + "' with return type '" + (ctx.type() != null ? ctx.type().getText() : "void") + "'");
-		}
-
-		@Override
-		public void enterFormalParameter(FParser.FormalParameterContext ctx) {
-			System.out.println("(FUNC) Entered formal parameter " + ctx.getText());
-		}
-
-		@Override
-		public void enterImportStatement(FParser.ImportStatementContext ctx) {
-			System.out.println("(BASE) Entered import statement to import " + ctx.IDENTIFIER());
-		}
-
-		@Override
-		public void enterValue(FParser.ValueContext ctx) {
-			System.out.println("Value entered: " + ctx.getText());
-		}
 	}
 
 }
