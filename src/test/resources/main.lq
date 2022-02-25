@@ -3,12 +3,13 @@
  *  IT IS SUPPOSED TO FAIL
  */
 
-import x; // to-do check import symbols
+import mod::x::hi; // to-do check import symbols
 // yeah boi
 pub func fn(l: str) {
     if true { let x: i32 = 100;
     old x; // free var x
     let mut y = fn(34);
+    let y = 1;
     y = 69;
     old y;
     z = 1;

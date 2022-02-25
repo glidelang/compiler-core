@@ -23,6 +23,7 @@ DROPLET: 'droplet';
 STRUCT: 'struct';
 INTF: 'intf';
 ENUM: 'enum';
+MODULE: 'mod'; // can be used in `import mod::local_module::func` and `pub mod x` (export)
 
 // control flow
 IF: 'if';
@@ -47,6 +48,7 @@ F32: 'f32';
 F64: 'f64';
 BOOL: 'bool';
 STR: 'str';
+VOID: 'void';
 
 WS  :  [ \t\r\n\u000C]+ -> skip
     ;

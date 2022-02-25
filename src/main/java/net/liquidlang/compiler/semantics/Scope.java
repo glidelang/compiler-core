@@ -26,7 +26,7 @@ public final class Scope implements Cloneable {
 	/**
 	 * Variable mappings.
 	 */
-	private final Map<String, FParser.ValueExprContext> variableMap = new HashMap<>();
+	public final Map<String, LiquidType> variableMap = new HashMap<>();
 
 	private final Scope parentScope;
 
@@ -56,25 +56,19 @@ public final class Scope implements Cloneable {
 			if(ctx.function() != null) {
 				scope.functionMap.put(ctx.function().IDENTIFIER().getText(), ctx.function());
 			} else if(ctx.assignment() != null) {
-				scope.variableMap.put(ctx.assignment().IDENTIFIER().getText(), ctx.assignment().valueExpr());
+				scope.variableMap.put(ctx.assignment().IDENTIFIER().getText(), LiquidType.fromTypeContext(ctx.assignment().type()));
 			}
 		}
 		return scope;
 	}
 
 	/**
-	 * Creates a block-level scope with this instance as its parent.
+	 * Creates a child {@link Scope}.
 	 */
 	@NotNull
-	@Contract(value = "_ -> new", pure = true)
-	public Scope childFunction(@NotNull FParser.BodyContext context) {
-		var scope = new Scope(this);
-		for(FParser.StmtContext ctx : context.stmt()) {
-			if(ctx.expr() != null && ctx.expr().assignment() != null) {
-				scope.variableMap.put(ctx.expr().assignment().IDENTIFIER().getText(), ctx.expr().assignment().valueExpr());
-			}
-		}
-		return scope;
+	@Contract(value = "-> new", pure = true)
+	public Scope child() {
+		return new Scope(this);
 	}
 
 	@Nullable
@@ -105,7 +99,7 @@ public final class Scope implements Cloneable {
 	 * @return A function or {@code null} if not found.
 	 */
 	@Nullable
-	public FParser.ValueExprContext resolve_variable(String identifier) {
+	public LiquidType resolve_variable(String identifier) {
 		if(variableMap.containsKey(identifier)) return variableMap.get(identifier);
 		else if(parent() != null) return parent().resolve_variable(identifier);
 		else {

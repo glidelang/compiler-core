@@ -30,6 +30,7 @@ public class Main implements Callable<Integer> {
 
 	private Main() {}
 
+	@Getter
 	@Parameters
 	private static Set<Path> targets;
 
@@ -82,7 +83,6 @@ public class Main implements Callable<Integer> {
 	}
 
 	@SneakyThrows
-	@VisibleForTesting
 	public static void parse(@NotNull Path origin) {
 		FLexer lex;
 		try {
@@ -113,7 +113,7 @@ public class Main implements Callable<Integer> {
 
 		@Override
 		public void enterImportStatement(FParser.ImportStatementContext ctx) {
-			System.out.println("(BASE) Entered import statement to import " + ctx.IDENTIFIER().getText());
+			System.out.println("(BASE) Entered import statement to import " + ctx.IDENTIFIER());
 		}
 
 		@Override

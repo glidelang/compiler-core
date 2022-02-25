@@ -1,0 +1,5 @@
+import mod::x::hi;
+
+inline inline func hello() -> u32 {
+
+}
