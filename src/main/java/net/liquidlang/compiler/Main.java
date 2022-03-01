@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import net.liquidlang.compiler.ast.FLexer;
 import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
+import net.liquidlang.compiler.semantics.Module;
 import net.liquidlang.compiler.semantics.SemanticAnalyzer;
 import net.liquidlang.compiler.util.CompilerLogger;
 import org.antlr.v4.runtime.CharStreams;
@@ -81,19 +82,21 @@ public class Main implements Callable<Integer> {
 
 		parse(mainTarget);
 		if(ansi) AnsiConsole.systemUninstall();
-		if(LiquidErrorHandler.errors >= 1) CompilerLogger.terminate(LiquidErrorHandler.errors + " errors found");
+		if(LiquidErrorHandler.errors >= 1) CompilerLogger.terminate(LiquidErrorHandler.errors + " errors found"); else CompilerLogger.info("compiled " + targets.size() + " modules successfully");
 		return 0;
 	}
 
 	@SneakyThrows
-	public static void parse(@NotNull Path origin) {
+	public static Module parse(@NotNull Path origin) {
 		FLexer lex = new FLexer(CharStreams.fromPath(origin));
 		lex.removeErrorListeners();
 		lex.addErrorListener(LiquidErrorHandler.INSTANCE);
 		var parser = new FParser(new CommonTokenStream(lex));
 		parser.removeErrorListeners();
 		parser.addErrorListener(LiquidErrorHandler.INSTANCE);
-		new ParseTreeWalker().walk(new SemanticAnalyzer(), parser.compilationUnit());
+		var sem = new SemanticAnalyzer();
+		new ParseTreeWalker().walk(sem, parser.compilationUnit());
+		return sem.getResult();
 	}
 
 }

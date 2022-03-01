@@ -113,7 +113,6 @@ public enum LiquidType {
 	}
 
 	public boolean isPrimitive() {
-		System.out.println(this);
 		return (this != DROPLET);
 	}
 

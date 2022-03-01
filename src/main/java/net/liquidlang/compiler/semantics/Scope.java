@@ -21,7 +21,7 @@ public final class Scope implements Cloneable {
 	/**
 	 * Function mappings.
 	 */
-	private final Map<String, FParser.FunctionContext> functionMap = new HashMap<>();
+	public final Map<String, FParser.FunctionContext> functionMap = new HashMap<>();
 
 	/**
 	 * Variable mappings.
@@ -111,4 +111,10 @@ public final class Scope implements Cloneable {
 	public Scope clone() throws CloneNotSupportedException {
 		return (Scope) super.clone();
 	}
+
+	@Override
+	public String toString() {
+		return "Scope{" + "functionMap=" + functionMap + ", variableMap=" + variableMap + ", parentScope=" + parentScope + '}';
+	}
+
 }

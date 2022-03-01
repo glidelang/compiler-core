@@ -1,5 +1,5 @@
-import mod::x::hi;
+// import mod::x::hi;
 
-inline inline func hello() -> u32 {
-
+pub inline func hello() -> u32 {
+    return 1;
 }

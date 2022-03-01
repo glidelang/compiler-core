@@ -1,5 +1,6 @@
 package net.liquidlang.compiler.semantics;
 
+import lombok.Getter;
 import net.liquidlang.compiler.Main;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
 import net.liquidlang.compiler.util.CompilerLogger;
@@ -7,6 +8,8 @@ import net.liquidlang.compiler.util.SymbolUtils;
 import net.liquidlang.compiler.ast.*;
 import org.antlr.v4.runtime.RuleContext;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
@@ -20,6 +23,11 @@ import static net.liquidlang.compiler.util.CompilerLogger.*;
 public class SemanticAnalyzer extends FParserBaseListener {
 
 	private Scope currentScope = null;
+	@Getter private Module result;
+	private final Module.Builder builder = Module.builder();
+
+	// We don't want to let the compiler crash to a StackOverflowError because we recursively
+	// tried parsing modules.
 	private static final List<String> circularDependencyPrevention = new ArrayList<>();
 
 	private boolean hasDuplicateRuleContext(@NotNull List<? extends RuleContext> listContainingDuplicates) {
@@ -39,9 +47,11 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		currentScope = Scope.from_module(ctx);
 	}
 
+	// Make sure to create the module
 	@Override
 	public void exitCompilationUnit(FParser.CompilationUnitContext ctx) {
 		currentScope = null;
+		result = builder.build();
 	}
 
 	// ================================================================================== destroy-scope (module)
@@ -63,6 +73,17 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				error("missing return statement in function: " + SymbolUtils.functionToString(ctx) + "", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
 			}
+		}
+
+		boolean pub = false;
+		for(FParser.Func_modifiersContext x : ctx.func_modifiers()) {
+			if(x.PUBLIC() != null) {
+				pub = true;
+				break;
+			}
+		}
+		if(pub) {
+			builder.export(ctx);
 		}
 
 	}
@@ -135,9 +156,23 @@ public class SemanticAnalyzer extends FParserBaseListener {
 					CompilerLogger.error("circular dependency in modules " + Arrays.toString(arr), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 					LiquidErrorHandler.errors++;
 				} else {
-					Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
+					var mod = Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
+					builder.importModule(mod, currentScope);
 				}
 			}
 		}
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(!(o instanceof SemanticAnalyzer that)) return false;
+		return new EqualsBuilder().append(currentScope, that.currentScope).append(result, that.result).isEquals();
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(17, 41).append(currentScope).append(result).toHashCode();
+	}
+
 }
