@@ -25,7 +25,8 @@ import static picocli.CommandLine.*;
 @Command(
 		name = "liqc",
 		description = "LiquidLang Compiler",
-		version = "1.0.0"
+		version = "1.0.0",
+		mixinStandardHelpOptions = true
 )
 public class Main implements Callable<Integer> {
 
@@ -88,15 +89,22 @@ public class Main implements Callable<Integer> {
 
 	@SneakyThrows
 	public static Module parse(@NotNull Path origin) {
+		CompilerLogger.debug("parsing module from path " + origin);
 		FLexer lex = new FLexer(CharStreams.fromPath(origin));
+		CompilerLogger.debug("lexer created");
 		lex.removeErrorListeners();
 		lex.addErrorListener(LiquidErrorHandler.INSTANCE);
+		CompilerLogger.debug("configured lexer error handling");
 		var parser = new FParser(new CommonTokenStream(lex));
+		CompilerLogger.debug("parser created");
 		parser.removeErrorListeners();
 		parser.addErrorListener(LiquidErrorHandler.INSTANCE);
+		CompilerLogger.debug("configured parser error handling");
 		var sem = new SemanticAnalyzer();
 		new ParseTreeWalker().walk(sem, parser.compilationUnit());
-		return sem.getResult();
+		var mod = sem.getResult();
+		CompilerLogger.debug("produced module object containing " + mod.getFunctions().size() + " exported functions");
+		return mod;
 	}
 
 }

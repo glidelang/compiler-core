@@ -44,6 +44,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	@Override
 	public void enterCompilationUnit(@NotNull FParser.CompilationUnitContext ctx) {
+		debug("initializing scope");
 		currentScope = Scope.from_module(ctx);
 	}
 
@@ -52,6 +53,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 	public void exitCompilationUnit(FParser.CompilationUnitContext ctx) {
 		currentScope = null;
 		result = builder.build();
+		debug("module " + Integer.toHexString(result.hashCode()) + " built");
 	}
 
 	// ================================================================================== destroy-scope (module)
@@ -61,11 +63,15 @@ public class SemanticAnalyzer extends FParserBaseListener {
 	@Override
 	public void enterFunction(@NotNull FParser.FunctionContext ctx) {
 
+		debug("checking for duplicate modifiers");
+
 		// check for duplicate modifiers
 		if(hasDuplicateRuleContext(ctx.func_modifiers())) {
 			error("duplicate modifiers in function: " + SymbolUtils.functionToString(ctx) + "", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		}
+
+		debug("checking for return statement");
 
 		// check if the function returns a value
 		if(ctx.type() != null) {
@@ -73,17 +79,18 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				error("missing return statement in function: " + SymbolUtils.functionToString(ctx) + "", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
 			}
+		} else {
+			debug("skipping; function implicitly returns void");
 		}
 
-		boolean pub = false;
+		debug("checking for publicity");
+
 		for(FParser.Func_modifiersContext x : ctx.func_modifiers()) {
 			if(x.PUBLIC() != null) {
-				pub = true;
+				debug("function is public; exporting function: " + SymbolUtils.functionToString(ctx));
+				builder.export(ctx);
 				break;
 			}
-		}
-		if(pub) {
-			builder.export(ctx);
 		}
 
 	}
@@ -98,6 +105,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 		// check symbol table for function
 		if(currentScope.resolve_function(ctx.IDENTIFIER().getText()) == null) {
+			debug("unable to resolve function in scope " + Integer.toHexString(currentScope.hashCode()));
 			error("unknown function: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		}
@@ -109,6 +117,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 		// check for existing variable in current scope
 		if(currentScope.variableMap.containsKey(ctx.IDENTIFIER().getText())) {
+			debug("variable declared more than once in scope " + Integer.toHexString(currentScope.hashCode()));
 			error("cannot declare a variable with the same name: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		} else {
@@ -123,7 +132,9 @@ public class SemanticAnalyzer extends FParserBaseListener {
 	public void enterReassignment(FParser.ReassignmentContext ctx) {
 
 		// check symbol table for variable
+		debug("entered reassignment statement");
 		if(currentScope.resolve_variable(ctx.IDENTIFIER().getText()) == null) {
+			debug("cannot find variable in scope " + Integer.toHexString(currentScope.hashCode()));
 			error("unknown variable: " + ctx.IDENTIFIER(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		}
@@ -144,14 +155,18 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	@Override
 	public void enterImportStatement(FParser.ImportStatementContext ctx) {
+		debug("entered import statement");
 		if(ImportManager.isLocalImport(ctx)) {
 			var x = ctx.IDENTIFIER().get(ctx.IDENTIFIER().size() - 1).getText();
 			if(!ImportManager.isContainedLocally(x)){
+				debug("cannot find module in compilation target files");
 				error("unknown local module: " + x, ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
 			} else {
+				debug("adding module name to module access order list");
 				circularDependencyPrevention.add("'" + StringUtils.removeEnd(Paths.get(ctx.start.getTokenSource().getSourceName()).getFileName().toString(), ".lq") + "'");
 				if(!findDuplicates(circularDependencyPrevention).isEmpty()) {
+					debug("found duplicates indicating a circular dependency");
 					var arr = circularDependencyPrevention.stream().distinct().toArray(String[]::new);
 					CompilerLogger.error("circular dependency in modules " + Arrays.toString(arr), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 					LiquidErrorHandler.errors++;

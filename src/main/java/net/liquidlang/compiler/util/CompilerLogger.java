@@ -33,6 +33,7 @@ public final class CompilerLogger {
 			stderr.println("liqc: error: " + s);
 		}
 	}
+
 	public static void warn(String s) {
 		if(Main.isAnsi()) {
 			stderr.println(Ansi.ansi().fg(Ansi.Color.WHITE).a("liqc: ").fg(Ansi.Color.YELLOW).bold().a("warning: ").reset().a(s).reset().toString());
@@ -46,6 +47,16 @@ public final class CompilerLogger {
 			stdout.println(Ansi.ansi().fg(Ansi.Color.WHITE).a("liqc: ").fg(Ansi.Color.GREEN).bold().a("info: ").reset().a(s).reset().toString());
 		} else {
 			stdout.println("liqc: info: " + s);
+		}
+	}
+
+	public static void debug(String s) {
+		if(Main.isVerbose()) {
+			if(Main.isAnsi()) {
+				stdout.println(Ansi.ansi().fg(Ansi.Color.WHITE).a("liqc: ").fg(Ansi.Color.MAGENTA).bold().a("verbose: ").reset().a(s).reset().toString());
+			} else {
+				stdout.println("liqc: verbose: " + s);
+			}
 		}
 	}
 
