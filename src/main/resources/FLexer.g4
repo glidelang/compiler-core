@@ -49,6 +49,7 @@ F64: 'f64';
 BOOL: 'bool';
 STR: 'str';
 VOID: 'void';
+CHAR: 'char';
 
 WS  :  [ \t\r\n\u000C]+ -> skip
     ;

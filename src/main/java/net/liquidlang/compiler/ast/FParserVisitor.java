@@ -47,6 +47,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction(FParser.FunctionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#functionSignature}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionSignature(FParser.FunctionSignatureContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#formalParameterList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -112,6 +118,18 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitValueExpr(FParser.ValueExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#functionType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionType(FParser.FunctionTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#functionValue}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionValue(FParser.FunctionValueContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FParser#type}.
 	 * @param ctx the parse tree
@@ -208,4 +226,10 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitDropletDecl(FParser.DropletDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#castType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCastType(FParser.CastTypeContext ctx);
 }

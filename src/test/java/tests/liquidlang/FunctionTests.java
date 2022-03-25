@@ -5,6 +5,9 @@ import net.liquidlang.compiler.util.SymbolUtils;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class FunctionTests {
 

@@ -2,7 +2,7 @@
   <configuration default="false" name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="net.liquidlang.compiler.Main" />
     <module name="compiler-core" />
-    <option name="PROGRAM_PARAMETERS" value="-c src\test\resources\main.lq src\test\resources\hi.lq src\test\resources\hello.lq -V" />
+    <option name="PROGRAM_PARAMETERS" value="-c src\test\resources\main.lq src\test\resources\hi.lq src\test\resources\hello.lq -v" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="net.fluidlang.compiler.*" />

@@ -68,6 +68,16 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitFunction(FParser.FunctionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FParser#functionSignature}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionSignature(FParser.FunctionSignatureContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#functionSignature}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionSignature(FParser.FunctionSignatureContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FParser#formalParameterList}.
 	 * @param ctx the parse tree
 	 */
@@ -177,6 +187,26 @@ public interface FParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitValueExpr(FParser.ValueExprContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#functionType}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionType(FParser.FunctionTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#functionType}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionType(FParser.FunctionTypeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#functionValue}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionValue(FParser.FunctionValueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#functionValue}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionValue(FParser.FunctionValueContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FParser#type}.
 	 * @param ctx the parse tree
@@ -337,4 +367,14 @@ public interface FParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitDropletDecl(FParser.DropletDeclContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#castType}.
+	 * @param ctx the parse tree
+	 */
+	void enterCastType(FParser.CastTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#castType}.
+	 * @param ctx the parse tree
+	 */
+	void exitCastType(FParser.CastTypeContext ctx);
 }

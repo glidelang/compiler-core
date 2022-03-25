@@ -1,40 +1,50 @@
-package net.liquidlang.compiler.semantics;
+package net.liquidlang.compiler.model;
 
-import lombok.Value;
+import lombok.Getter;
 import net.liquidlang.compiler.ast.FParser;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class represents a Liquid module after parsing. Only (exported) {@code pub} variables can be accessed through this module, thus
  * allowing for access modifiers to guard the members. This class is immutable and can only be constructed through the {@link Builder}.
  */
-@Value
 public class Module {
 
-	@Contract(" -> new")
-	public static @NotNull Builder builder() {
-		return new Builder();
+	private final int hashCode;
+	@Getter private final String name;
+
+	@Contract("_ -> new")
+	public static @NotNull Builder builder(String name) {
+		return new Builder(name);
 	}
 
-	private Module(Collection<FParser.FunctionContext> fn) {
+	// hashCodes are always constant
+	private Module(Collection<FParser.FunctionContext> fn, int hashCode, String name) {
+		this.hashCode = hashCode;
+		this.name = name;
 		functions.addAll(fn);
 	}
 
-	Set<FParser.FunctionContext> functions = new HashSet<>();
+	@Getter
+	private final Set<FParser.FunctionContext> functions = new HashSet<>();
 
 	public static class Builder {
 
-		private Builder() {
+		private final String name;
+
+		private Builder(String name) {
 			//no instance
+			this.name = name;
 		}
 
 		private final Set<FParser.FunctionContext> exportedFunctions = new HashSet<>();
+		@Getter
+		private final Set<Module> importedModules = new HashSet<>();
+		private final int hashcode = new HashCodeBuilder(1342189, 47891).append(UUID.randomUUID()).toHashCode();
 
 		/**
 		 * Exports a function from the module, allowing for use outside this
@@ -74,6 +84,7 @@ public class Module {
 		@SuppressWarnings("UnusedReturnValue")
 		public Builder importModule(@NotNull Module module) {
 			export(module.functions);
+			importedModules.add(module);
 			return this;
 		}
 
@@ -87,9 +98,10 @@ public class Module {
 		@SuppressWarnings("UnusedReturnValue")
 		public Builder importModule(@NotNull Module module, @NotNull Scope scope) {
 			export(module.functions);
+			importedModules.add(module);
 			for(FParser.FunctionContext context : module.functions) {
 				// there are only public functions
-				scope.functionMap.put(context.IDENTIFIER().getText(), context);
+				scope.functionMap.put(FunctionDescriptor.from(module.name, context.IDENTIFIER().getText(), ObjectType.fromTypeContext(context.functionSignature().type()), context.functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), context);
 			}
 			return this;
 		}
@@ -104,7 +116,7 @@ public class Module {
 		@Contract("-> new")
 		public Module build() {
 			//System.out.println(this);
-			var m = new Module(exportedFunctions);
+			var m = new Module(exportedFunctions, hashcode, name);
 			exportedFunctions.clear();
 			return m;
 		}
@@ -113,6 +125,22 @@ public class Module {
 		public String toString() {
 			return "Builder{" + "exportedFunctions=" + exportedFunctions + '}';
 		}
+
+		@Override
+		public int hashCode() {
+			return hashcode;
+		}
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(!(o instanceof Module module)) return false;
+		return functions.equals(module.functions);
+	}
+
+	@Override
+	public int hashCode() {
+		return hashCode;
+	}
 }

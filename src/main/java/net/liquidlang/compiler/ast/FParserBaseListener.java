@@ -88,6 +88,18 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterFunctionSignature(FParser.FunctionSignatureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFunctionSignature(FParser.FunctionSignatureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterFormalParameterList(FParser.FormalParameterListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -215,6 +227,30 @@ public class FParserBaseListener implements FParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitValueExpr(FParser.ValueExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFunctionType(FParser.FunctionTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFunctionType(FParser.FunctionTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFunctionValue(FParser.FunctionValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFunctionValue(FParser.FunctionValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -407,6 +443,18 @@ public class FParserBaseListener implements FParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitDropletDecl(FParser.DropletDeclContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterCastType(FParser.CastTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCastType(FParser.CastTypeContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

@@ -5,12 +5,14 @@ import lombok.SneakyThrows;
 import net.liquidlang.compiler.ast.FLexer;
 import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
-import net.liquidlang.compiler.semantics.Module;
+import net.liquidlang.compiler.model.Module;
 import net.liquidlang.compiler.semantics.SemanticAnalyzer;
 import net.liquidlang.compiler.util.CompilerLogger;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.fusesource.jansi.AnsiConsole;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
@@ -19,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import static picocli.CommandLine.*;
 
@@ -41,8 +44,11 @@ public class Main implements Callable<Integer> {
 	private static boolean ansi;
 
 	@Getter
-	@Option(names = {"--verbose", "-V"})
+	@Option(names = {"--verbose", "-v"})
 	private static boolean verbose;
+
+	@Getter
+	private static boolean compilingLib = false;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new Main()).execute(args));
@@ -56,7 +62,6 @@ public class Main implements Callable<Integer> {
 			return 1;
 		}
 		boolean hasOrigin = false;
-		boolean compilingLib = false;
 		Path mainTarget = null;
 		for(Path p : targets) {
 			if(Files.notExists(p)) {
@@ -80,10 +85,13 @@ public class Main implements Callable<Integer> {
 		}
 
 		CompilerLogger.info("compiling library from " + targets.size() + " modules");
-
+		var stp = new StopWatch();
+		stp.start();
 		parse(mainTarget);
+		stp.stop();
 		if(ansi) AnsiConsole.systemUninstall();
-		if(LiquidErrorHandler.errors >= 1) CompilerLogger.terminate(LiquidErrorHandler.errors + " errors found"); else CompilerLogger.info("compiled " + targets.size() + " modules successfully");
+		Thread.sleep(200);
+		if(LiquidErrorHandler.errors >= 1) CompilerLogger.terminate(LiquidErrorHandler.errors + " errors found" + (LiquidErrorHandler.warns >= 1 ? " with " + LiquidErrorHandler.warns + " warns" : "") + " in " + stp.getTime(TimeUnit.MILLISECONDS) + "ms"); else CompilerLogger.info("compiled " + targets.size() + " modules successfully" + (LiquidErrorHandler.warns >= 1 ? " with " + LiquidErrorHandler.warns + " warnings" : "") + " in " + stp.getTime(TimeUnit.MILLISECONDS) + "ms");
 		return 0;
 	}
 
@@ -100,7 +108,7 @@ public class Main implements Callable<Integer> {
 		parser.removeErrorListeners();
 		parser.addErrorListener(LiquidErrorHandler.INSTANCE);
 		CompilerLogger.debug("configured parser error handling");
-		var sem = new SemanticAnalyzer();
+		var sem = new SemanticAnalyzer(StringUtils.removeEnd(origin.getFileName().toString(), ".lq"));
 		new ParseTreeWalker().walk(sem, parser.compilationUnit());
 		var mod = sem.getResult();
 		CompilerLogger.debug("produced module object containing " + mod.getFunctions().size() + " exported functions");

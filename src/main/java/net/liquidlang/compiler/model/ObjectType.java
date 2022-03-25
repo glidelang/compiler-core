@@ -1,16 +1,19 @@
-package net.liquidlang.compiler.semantics;
+package net.liquidlang.compiler.model;
 
+import lombok.Setter;
 import net.liquidlang.compiler.ast.FParser;
+import net.liquidlang.compiler.semantics.SemanticAnalyzer;
+import net.liquidlang.compiler.util.SymbolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.util.Locale;
 
 /**
- * Liquid types.
+ * Object types.
  */
-public enum LiquidType {
+public enum ObjectType {
 
 	/**
 	 * The 1-bit unsigned integer type, which represents
@@ -58,23 +61,44 @@ public enum LiquidType {
 	 */
 	U128,
 	/**
+	 * A character value.
+	 */
+	CHAR,
+	/**
+	 * A function pointer.
+	 */
+	FUNC,
+	/**
 	 * A droplet structure.
 	 */
-	DROPLET;
+	DROPLET,
+	/**
+	 * Returns nothing.
+	 */
+	VOID,
+	/**
+	 * A string.
+	 */
+	STR;
 
-	public static final BigInteger MINIMUM_UNSIGNED = new BigInteger(String.valueOf(0));
-
+	/**
+	 * Type name
+	 */
+	@Setter
 	private String identifier = null;
 
 	/**
-	 * Creates a {@link LiquidType} from the type context.
+	 * Creates a {@link ObjectType} from the type context.
 	 * @param ctx the type context.
 	 * @return the created Liquid type.
 	 */
 	@Contract(pure = true)
-	public static LiquidType fromTypeContext(FParser.@NotNull TypeContext ctx) {
+	public static ObjectType fromTypeContext(FParser.@Nullable TypeContext ctx) {
+		if(ctx == null) return VOID;
+		else if(ctx.functionType() != null) return FUNC;
+		else if(ctx.CHAR() != null) return CHAR;
 		// boolean
-		if(ctx.BOOL() != null) return BOOL;
+		else if(ctx.BOOL() != null) return BOOL;
 		// signed
 		else if(ctx.I8() != null) return I8;
 		else if(ctx.I16() != null) return I16;
@@ -92,23 +116,21 @@ public enum LiquidType {
 			var type = DROPLET;
 			type.identifier = ctx.IDENTIFIER().getText();
 			return type;
-		} else throw new InternalError(); // this should not happen
+		} else if(ctx.STR() != null) return STR;
+		else return VOID;
 	}
 
 	/**
-	 * Creates a {@link LiquidType} from the assignment context. If a {@link net.liquidlang.compiler.ast.FParser.TypeContext TypeContext}
+	 * Creates a {@link ObjectType} from the assignment context. If a {@link net.liquidlang.compiler.ast.FParser.TypeContext TypeContext}
 	 * is present, this method will delegate to using {@link #fromTypeContext(FParser.TypeContext)}. Otherwise, this method will perform
 	 * compiler type inference.
-	 * <p>At this moment, it returns a {@link #DROPLET} by default.</p>
 	 * @param ctx the assignment context.
 	 * @return the created Liquid type.
 	 */
-	public static LiquidType fromAssignmentContext(FParser.AssignmentContext ctx) {
+	public static ObjectType fromAssignmentContext(FParser.@NotNull AssignmentContext ctx, Scope scope) {
 		if(ctx.type() != null) return fromTypeContext(ctx.type());
 		else {
-			var type = DROPLET;
-			type.identifier = "unknown";
-			return type;
+			return SymbolUtils.typeCheckAndInference(ctx.valueExpr(), ctx, scope);
 		}
 	}
 
@@ -126,4 +148,5 @@ public enum LiquidType {
 	public String toString() {
 		return isPrimitive() ? name().toLowerCase(Locale.ROOT) : identifier;
 	}
+
 }
