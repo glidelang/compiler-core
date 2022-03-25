@@ -1,5 +1,11 @@
-import mod::main::*;
+pub inline func hi() -> u32 {
+    return 1;
+}
 
-inline inline func hi() -> u32 {
+pub inline func hi() -> u16 {
+    return 1;
+}
 
+pub inline func hi() -> u8 {
+    return 1;
 }

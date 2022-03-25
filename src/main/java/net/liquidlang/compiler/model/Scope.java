@@ -10,13 +10,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import static net.liquidlang.compiler.util.CompilerLogger.debug;
-import static net.liquidlang.compiler.util.CompilerLogger.error;
 
 /**
  * The scope of an object. This is used in conjunction with the symbol table recorded in the origin module ({@code main.lq} or {@code lib.lq}).
@@ -103,9 +101,6 @@ public final class Scope implements Cloneable {
 	 */
 	@Nullable
 	public FParser.FunctionContext resolve_function(@NotNull FunctionDescriptor identifier) {
-
-//		var identifier2 = FunctionDescriptor.from(name, identifier.getIdentifier(), identifier.getReturnType(), identifier.getParameterTypes());
-//		identifier = identifier2;
 
 		CompilerLogger.debug("attempting to resolve function with identifier " + identifier + " in scope " + Integer.toHexString(hashCode()));
 

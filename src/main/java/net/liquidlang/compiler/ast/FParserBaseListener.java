@@ -160,18 +160,6 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterOldStatement(FParser.OldStatementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitOldStatement(FParser.OldStatementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterBlock(FParser.BlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -383,6 +371,18 @@ public class FParserBaseListener implements FParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitReturnStatement(FParser.ReturnStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterUnsafeBlock(FParser.UnsafeBlockContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUnsafeBlock(FParser.UnsafeBlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

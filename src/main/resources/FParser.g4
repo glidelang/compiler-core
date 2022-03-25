@@ -31,13 +31,12 @@ value: NullLiteral
                 | newStatement;
 passedParameterList: (value (',' value)*)?;
 newStatement: NEW IDENTIFIER;
-oldStatement: OLD IDENTIFIER ';';
 
 block: LBRACE body RBRACE;
 body: stmt* returnStatement?;
-stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | oldStatement;
+stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | unsafeBlock;
 expr: assignment | valueExpr | reassignment;
-valueExpr: methodCall | value | castType;
+valueExpr: methodCall | value | castType | block | unsafeBlock;
 functionType: FUNCTION functionSignature;
 functionValue: FUNCTION IDENTIFIER functionSignature;
 
@@ -72,6 +71,8 @@ whileStatement: WHILE valueExpr block;
 loopStatement: LOOP block;
 forStatement: FOR IDENTIFIER IN valueExpr block;
 returnStatement: RETURN valueExpr ';'? | valueExpr;
+
+unsafeBlock: UNSAFE block;
 
 dropletBlock: LBRACE dropletBody RBRACE;
 dropletVarModifiers: STATIC | MUTABLE;

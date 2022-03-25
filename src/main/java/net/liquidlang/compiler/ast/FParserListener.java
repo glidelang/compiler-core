@@ -128,16 +128,6 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitNewStatement(FParser.NewStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link FParser#oldStatement}.
-	 * @param ctx the parse tree
-	 */
-	void enterOldStatement(FParser.OldStatementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link FParser#oldStatement}.
-	 * @param ctx the parse tree
-	 */
-	void exitOldStatement(FParser.OldStatementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link FParser#block}.
 	 * @param ctx the parse tree
 	 */
@@ -317,6 +307,16 @@ public interface FParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitReturnStatement(FParser.ReturnStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#unsafeBlock}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnsafeBlock(FParser.UnsafeBlockContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#unsafeBlock}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnsafeBlock(FParser.UnsafeBlockContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FParser#dropletBlock}.
 	 * @param ctx the parse tree

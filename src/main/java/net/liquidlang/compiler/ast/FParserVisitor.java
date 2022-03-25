@@ -83,12 +83,6 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNewStatement(FParser.NewStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link FParser#oldStatement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOldStatement(FParser.OldStatementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link FParser#block}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -196,6 +190,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitReturnStatement(FParser.ReturnStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#unsafeBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnsafeBlock(FParser.UnsafeBlockContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FParser#dropletBlock}.
 	 * @param ctx the parse tree

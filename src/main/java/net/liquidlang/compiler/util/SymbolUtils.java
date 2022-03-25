@@ -18,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static net.liquidlang.compiler.util.CompilerLogger.debug;
 import static net.liquidlang.compiler.util.CompilerLogger.error;
@@ -43,15 +45,12 @@ public final class SymbolUtils {
 	 * @param filename The filename.
 	 * @param return_type The return type for the function. This is to facilitate return type overloading.
 	 * @param name The function name
-	 * @param param_overload_count The parameter overload count for the function. This is determined by the number of function symbols
-	 *                             referring to the function name. If there were two functions {@code a(int)} and {@code a(b)}, the overload
-	 *                             count would be 1, as the formula for overload count is {@code symbol_count - 1}. This is not affected by
-	 *                             return type overloading, as it is determined in {@code return_type}.
+	 * @param objectTypes The parameters
 	 * @return the Liquid-mangled function name for a given function.
 	 */
 	@Contract(pure = true)
-	public static @NotNull String mangle_function(@NotNull String filename, @NotNull String return_type, @NotNull String name, int param_overload_count) {
-		return "glide_" + filename + "__" + return_type + "_" + name + "" + param_overload_count;
+	public static @NotNull String mangle_function(@NotNull String filename, @NotNull String return_type, @NotNull String name, @NotNull Collection<ObjectType> objectTypes) {
+		return "glide_" + filename + "__" + return_type + "_" + name + "_" + objectTypes.size();
 	}
 
 	@Contract(pure = true)
@@ -111,6 +110,17 @@ public final class SymbolUtils {
 					return null;
 				}
 				return ObjectType.fromTypeContext(func.functionSignature().type());
+			}
+
+			else if(ctx.unsafeBlock() != null || ctx.block() != null) {
+				var body = (ctx.unsafeBlock() != null ? ctx.unsafeBlock().block() : ctx.block()).body();
+				if(body.returnStatement() != null) {
+					return typeCheckAndInference(body.returnStatement().valueExpr(), ctx, scope);
+				} else {
+					error("cannot infer type - the last statement in a block used as a value must be a return statement: " + backupContext.getText(), backupContext.start.getLine(), backupContext.start.getCharPositionInLine(), backupContext.start.getTokenSource().getSourceName());
+					LiquidErrorHandler.errors++;
+					return null;
+				}
 			}
 
 			else throw new IllegalStateException();

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static net.liquidlang.compiler.util.CompilerLogger.*;
 
@@ -167,12 +168,17 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 		// check symbol table for function
 		debug("attempting to resolve function call '" + ctx.getText() + "'");
-		var fun = currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), null, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
+
+		// we can guarantee that the type will only be null if a return type is specified
+		// through the function call: e.g. function->void(); will never be null
+		ObjectType type = ctx.type() != null ? ObjectType.fromTypeContext(ctx.type()) : null;
+
+		var fun = currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
 		if(fun == null) {
 			// function might be in a different module
 			for(Module module : builder.getImportedModules()) {
 				if(fun == null) {
-					fun = currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), null, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
+					fun = currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
 				} else {
 					break;
 				}
@@ -181,9 +187,21 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				debug("unable to resolve function in scope " + Integer.toHexString(currentScope.hashCode()));
 				error("unknown function: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
+				return;
 			}
-		} else {
-			debug("resolved function call '" + ctx.getText() + "' as " + SymbolUtils.functionToString(fun));
+		}
+
+		debug("resolved function call '" + ctx.getText() + "' as " + SymbolUtils.functionToString(fun));
+		if(fun.func_modifiers().stream().map(RuleContext::getText).collect(Collectors.joining()).contains("unsafe")) {
+			debug("function call '" + SymbolUtils.functionToString(fun) + "' is unsafe");
+			debug("checking if it is in an unsafe block");
+			if(fun.parent.parent instanceof FParser.UnsafeBlockContext) {
+				debug("unsafe block requirement not fulfilled");
+				error("unsafe function must be in unsafe block: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				LiquidErrorHandler.errors++;
+			} else {
+				debug("unsafe block requirement fulfilled");
+			}
 		}
 
 	}

@@ -13,12 +13,15 @@ pub unsafe func fn(l: i32) -> u32 {
 // yeah boi
 pub func main(l: str) {
     if true {
-        let x: i32 = 100;
-            old x; // free var x
-            let mut y = fn(34);
+            let x: i32 = 100;
+            let mut y = unsafe {
+                fn(34)
+            };
             y = 69;
             stringFn("Hello");
             hello();
-            fn("s");
+            unsafe {
+                fn("s");
+            }
     }
 }

@@ -25,7 +25,7 @@ public final class FunctionDescriptor {
 	@Getter private final ObjectType returnType;
 	/**
 	 * The mangled identifier of the descriptor, in
-	 * accordance with {@link SymbolUtils#mangle_function(String, String, String, int)}.
+	 * accordance with {@link SymbolUtils#mangle_function(String, String, String, Collection)}.
 	 * <p>This is returned when calling {@link #toString()}.</p>
 	 */
 	@Getter private final String mangledIdentifier;
@@ -37,7 +37,7 @@ public final class FunctionDescriptor {
 		this.identifier = identifier;
 		this.returnType = returnType;
 		this.objectTypes = objectTypes;
-		this.mangledIdentifier = SymbolUtils.mangle_function(this.moduleName, Objects.toString(returnType), identifier, objectTypes.size());
+		this.mangledIdentifier = SymbolUtils.mangle_function(this.moduleName, Objects.toString(returnType), identifier, objectTypes);
 	}
 
 	/**

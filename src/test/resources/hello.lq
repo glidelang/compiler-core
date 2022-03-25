@@ -1,5 +1,7 @@
-// import mod::x::hi;
+import mod::x::hi;
 
 pub inline func hello() -> u32 {
+    hi->u32();
+    hi->u16();
     return 1;
 }
