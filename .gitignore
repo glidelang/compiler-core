@@ -183,3 +183,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+### ANTLR stuff
+src/main/resources/*.interp
+src/main/resources/*.tokens
