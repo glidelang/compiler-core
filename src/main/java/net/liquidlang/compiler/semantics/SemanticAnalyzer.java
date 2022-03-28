@@ -2,23 +2,21 @@ package net.liquidlang.compiler.semantics;
 
 import lombok.Getter;
 import net.liquidlang.compiler.Main;
+import net.liquidlang.compiler.ast.FParser;
+import net.liquidlang.compiler.ast.FParserBaseListener;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
-import net.liquidlang.compiler.model.FunctionDescriptor;
-import net.liquidlang.compiler.model.ObjectType;
+import net.liquidlang.compiler.model.*;
 import net.liquidlang.compiler.model.Module;
-import net.liquidlang.compiler.model.Scope;
-import net.liquidlang.compiler.util.CompilerLogger;
 import net.liquidlang.compiler.util.SymbolUtils;
-import net.liquidlang.compiler.ast.*;
 import org.antlr.v4.runtime.RuleContext;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -112,6 +110,49 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	// ================================================================================== destroy-scope (module)
 
+	public static FParser.@Nullable ReturnStatementContext getReturns(FParser.@NotNull BodyContext context) {
+
+		var list = new ArrayList<FParser.ReturnStatementContext>();
+		boolean hasReturn = false;
+		boolean hasWarned = false;
+		for(var v : context.stmt()) {
+			if(v.returnStatement() != null) {
+				if(!hasReturn) {
+					list.add(v.returnStatement());
+					hasReturn = true;
+				} else {
+					warn("unreachable return", v.getStart().getLine(), v.getStart().getCharPositionInLine(), v.start.getTokenSource().getSourceName());
+				}
+			} else if(!hasWarned && hasReturn) {
+				warn("unreachable statement", v.getStart().getLine(), v.getStart().getCharPositionInLine(), v.start.getTokenSource().getSourceName());
+				hasWarned = true;
+			}
+		}
+		return !list.isEmpty() ? list.get(0) : null;
+
+	}
+
+//	/**
+//	 * Verifies whether all control flow routes lead to returns.
+//	 * @param context the context to check
+//	 * @return whether there are returns
+//	 */
+//	public static boolean verifyReturnsExistInBlock(FParser.@NotNull BodyContext context) {
+//
+//		// just do a few premature checks first
+//		if(context.stmt().isEmpty()) {
+//			return false;
+//		} else if(getReturns(context) != null) {
+//			return true;
+//		}
+//
+//		for(var s : context.stmt()) {
+//
+//		}
+//		return true;
+//
+//	}
+
 	// ================================================================================== init-scope (blocks)
 
 	@Override
@@ -130,12 +171,13 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		if(ctx.functionSignature().type() != null) {
 			debug("returned type discovered as " + ctx.functionSignature().type().getText());
 			debug("checking for return statement");
-			if(ctx.block().body().returnStatement() == null) {
+			if(getReturns(ctx.block().body()) == null) {
 				error("missing return statement in function: " + SymbolUtils.functionToString(ctx) + "", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
+			} else {
+				debug("checking type of return value");
 			}
-		} else {
-			debug("skipping return check; function implicitly returns void");
+			// to-do check type of returned object
 		}
 
 		boolean isStatic = false;
@@ -173,12 +215,12 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		// through the function call: e.g. function->void(); will never be null
 		ObjectType type = ctx.type() != null ? ObjectType.fromTypeContext(ctx.type()) : null;
 
-		var fun = currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
+		var fun = currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new)));
 		if(fun == null) {
 			// function might be in a different module
 			for(Module module : builder.getImportedModules()) {
 				if(fun == null) {
-					fun = currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().value().stream().map(valueContext -> SymbolUtils.resolveValue(valueContext, ctx)).toArray(ObjectType[]::new)));
+					fun = currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new)));
 				} else {
 					break;
 				}
@@ -203,20 +245,67 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				debug("unsafe block requirement fulfilled");
 			}
 		}
+		var formalList = fun.functionSignature().formalParameterList().formalParameter().stream().map(FParser.FormalParameterContext::type).map(ObjectType::fromTypeContext).toList();
+		var passedList = ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList();
+		debug("verifying function signature correspondence");
+		if(!formalList.equals(passedList)) {
+			debug("differing parameter count; reporting error");
+			error("formal parameter list " + formalList + " does not match with actual parameters passed " + passedList + ": " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			LiquidErrorHandler.errors++;
+		}
+
+	}
+
+	private static void typeCheck() {
 
 	}
 
 	@Override
 	public void enterAssignment(FParser.AssignmentContext ctx) {
 
+		debug("entered assignment statement");
+
 		// check for existing variable in current scope
-		if(currentScope.variableMap.containsKey(ctx.IDENTIFIER().getText())) {
+		if(currentScope.resolve_variable(VariableDescriptor.wildcard_from(ctx.IDENTIFIER().getText(), currentScope.hashCode())) != null) {
 			debug("variable declared more than once in scope " + Integer.toHexString(currentScope.hashCode()));
 			error("cannot declare a variable with the same name: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
 		} else {
 			// add to the current scope
-			currentScope.variableMap.put(ctx.IDENTIFIER().getText(), ObjectType.fromAssignmentContext(ctx, currentScope));
+			ObjectType obj = ObjectType.fromAssignmentContext(ctx, currentScope);
+			currentScope.variableMap.put(VariableDescriptor.from(ctx.IDENTIFIER().getText(), currentScope.hashCode(), ObjectType.fromAssignmentContext(ctx, currentScope), ctx.variable_modifiers()), obj);
+			if(ctx.type() != null) {
+
+				var eval = SymbolUtils.typeCheckAndInference(ctx.valueExpr(), ctx, currentScope);
+
+				debug("type checking value '" + ctx.valueExpr().getText() + "' with type " + obj.toString());
+				if(obj.isNullable() && eval == ObjectType.VOID) {
+					debug("given a nullable variable a null initializer; returning");
+					return;
+				} else if(obj.isNullable() && eval != ObjectType.VOID) {
+					debug("given a nullable variable a full value; performing type checking");
+				} else if(!obj.isNullable() && eval == ObjectType.VOID) {
+					debug("given a full variable a null initializer; returning with error");
+					if(ctx.valueExpr().methodCall() != null) {
+						error("cannot assign a void function to a variable expecting a full type: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					} else {
+						error("cannot assign a null initializer to a variable expecting a full type: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					}
+					LiquidErrorHandler.errors++;
+					return;
+				} else {
+					debug("given a full variable a full value; performing type checking");
+				}
+
+				if(obj != eval && !obj.isNullable()) {
+					debug("incompatible types in full variable");
+					error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				} else if(obj != eval && eval != ObjectType.VOID) {
+					debug("incompatible types in nullable variable");
+					error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				}
+
+			}
 		}
 
 	}
@@ -227,13 +316,45 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 		// check symbol table for variable
 		debug("entered reassignment statement");
-		ObjectType type = currentScope.resolve_variable(ctx.IDENTIFIER().getText());
-		if(type == null) {
+		ObjectType obj = currentScope.resolve_variable(VariableDescriptor.wildcard_from(ctx.IDENTIFIER().getText(), currentScope.hashCode()));
+		VariableDescriptor id = currentScope.resolve_variable_descriptor(VariableDescriptor.wildcard_from(ctx.IDENTIFIER().getText(), currentScope.hashCode()));
+		if(obj == null || id == null) {
 			debug("cannot find variable in scope " + Integer.toHexString(currentScope.hashCode()));
 			error("unknown variable: " + ctx.IDENTIFIER(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
+		} else if(!id.isMutable()) {
+			error("cannot mutate non-mutable variable: " + ctx.IDENTIFIER(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			LiquidErrorHandler.errors++;
 		} else {
-			debug("type checking value '" + ctx.valueExpr().getText() + "' with type " + type);
+
+			var eval = SymbolUtils.typeCheckAndInference(ctx.valueExpr(), ctx, currentScope);
+
+			debug("type checking value '" + ctx.valueExpr().getText() + "' with type " + obj);
+			if(obj.isNullable() && eval == ObjectType.VOID) {
+				debug("given a nullable variable a null initializer; returning");
+				return;
+			} else if(obj.isNullable() && eval != ObjectType.VOID) {
+				debug("given a nullable variable a full value; performing type checking");
+			} else if(!obj.isNullable() && eval == ObjectType.VOID) {
+				debug("given a full variable a null initializer; returning with error");
+				if(ctx.valueExpr().methodCall() != null) {
+					error("cannot assign a void function to a variable expecting a full type: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				} else {
+					error("cannot assign a null initializer to a variable expecting a full type: " + ctx.IDENTIFIER().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				}
+				LiquidErrorHandler.errors++;
+				return;
+			} else {
+				debug("given a full variable a full value; performing type checking");
+			}
+
+			if(obj != eval && !obj.isNullable()) {
+				debug("incompatible types in full variable");
+				error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			} else if(obj != eval && eval != ObjectType.VOID) {
+				debug("incompatible types in nullable variable");
+				error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+			}
 		}
 
 	}
@@ -250,6 +371,35 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		return duplicates;
 	}
 
+	@SuppressWarnings("all")
+	private <T> boolean findDuplicatePattern(@NotNull List<T> collection) {
+		List<T[]> pattern = new ArrayList<>();
+		for(int i = 0; i + 1 < collection.size(); i++) {
+			pattern.add((T[]) new Object[] { collection.get(i), collection.get(i + 1) });
+		}
+		List<T[]> collection2 = new ArrayList<>();
+		for(int i = 0; i + 1 < collection.size(); i++) {
+			// group the collection into arrays
+			collection2.add((T[]) new Object[] { collection.get(i), collection.get(i + 1) });
+		}
+		boolean repeat = false;
+		boolean duplicate = false;
+		for(T[] tArray : collection2) {
+			for(T[] tArray2 : pattern) {
+				if(Arrays.equals(tArray, tArray2)) {
+					if(repeat) {
+						duplicate = true;
+						break;
+
+					} else {
+						repeat = true;
+					}
+				}
+			}
+		}
+		return duplicate;
+	}
+
 	@Override
 	public void enterImportStatement(FParser.ImportStatementContext ctx) {
 		debug("entered import statement");
@@ -261,13 +411,8 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				LiquidErrorHandler.errors++;
 			} else {
 				debug("adding module name to module access order list");
-				circularDependencyPrevention.add("'" + StringUtils.removeEnd(Paths.get(ctx.start.getTokenSource().getSourceName()).getFileName().toString(), ".lq") + "'");
-				if(!findDuplicates(circularDependencyPrevention).isEmpty()) {
-					debug("found duplicates indicating a circular dependency");
-					var arr = circularDependencyPrevention.stream().distinct().toArray(String[]::new);
-					CompilerLogger.error("circular dependency in modules " + Arrays.toString(arr), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
-					LiquidErrorHandler.errors++;
-				} else {
+				circularDependencyPrevention.add("'" + x + "'");
+				if(!findDuplicatePattern(circularDependencyPrevention)) {
 					var mod = Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
 					builder.importModule(mod, currentScope);
 				}

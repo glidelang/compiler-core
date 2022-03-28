@@ -3,7 +3,8 @@
  *  IT IS SUPPOSED TO FAIL
  */
 
-import mod::hello::hello; // to-do check import symbols
+import mod::hello;
+import mod::hi;
 
 pub inline func stringFn(s: str) {}
 pub unsafe func fn(l: i32) -> u32 {
@@ -14,14 +15,18 @@ pub unsafe func fn(l: i32) -> u32 {
 pub func main(l: str) {
     if true {
             let x: i32 = 100;
-            let mut y = unsafe {
-                fn(34)
-            };
+
+            let y = 1;
             y = 69;
+
             stringFn("Hello");
             hello();
             unsafe {
-                fn("s");
+                fn(1337);
             }
+            let x2: str? = "500";
+            let y2: u32? = u32?(x2);
+            let a: str? = null;
+            hello();
     }
 }

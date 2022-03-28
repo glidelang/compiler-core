@@ -361,6 +361,6 @@ RSHIFT_ASSIGN : '>>=';
 URSHIFT_ASSIGN : '>>>=';
 
 IDENTIFIER
-    :   [A-Za-z0-9]+
+    :   [A-Za-z0-9_]+
     //: 'fn'
     ;

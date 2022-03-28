@@ -6,6 +6,8 @@ import net.liquidlang.compiler.err.LiquidErrorHandler;
 import net.liquidlang.compiler.model.FunctionDescriptor;
 import net.liquidlang.compiler.model.ObjectType;
 import net.liquidlang.compiler.model.Scope;
+import net.liquidlang.compiler.model.VariableDescriptor;
+import net.liquidlang.compiler.semantics.SemanticAnalyzer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +21,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static net.liquidlang.compiler.util.CompilerLogger.debug;
@@ -87,21 +90,25 @@ public final class SymbolUtils {
 
 			// cast types are the easiest to infer
 			if(ctx.castType() != null) {
+				debug("inferring from cast");
 				return ObjectType.fromTypeContext(ctx.castType().type());
 			}
 
 			// for direct value input
 			else if(ctx.value() != null) {
-				return resolveValue(ctx.value(), backupContext);
+				// glide values can NEVER be null.
+				debug("inferring from direct value");
+				return resolveValue(ctx.value(), scope);
 			}
 
 			// for function calls
 			else if(ctx.methodCall() != null) {
+				debug("inferring from method call");
 				var types = ctx.methodCall()
 						.passedParameterList()
-						.value()
+						.valueExpr()
 						.stream() // the order is important
-						.map(valueContext -> resolveValue(valueContext, backupContext))
+						.map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, scope))
 						.toList();
 				var func = scope.resolve_function(FunctionDescriptor.from(scope.getName(), ctx.methodCall().IDENTIFIER().getText(), null, types));
 				if(func == null) {
@@ -113,13 +120,12 @@ public final class SymbolUtils {
 			}
 
 			else if(ctx.unsafeBlock() != null || ctx.block() != null) {
+				debug("inferring from block");
 				var body = (ctx.unsafeBlock() != null ? ctx.unsafeBlock().block() : ctx.block()).body();
-				if(body.returnStatement() != null) {
-					return typeCheckAndInference(body.returnStatement().valueExpr(), ctx, scope);
+				if(SemanticAnalyzer.getReturns(body) != null) {
+					return typeCheckAndInference(Objects.requireNonNull(SemanticAnalyzer.getReturns(body)).valueExpr(), ctx, scope);
 				} else {
-					error("cannot infer type - the last statement in a block used as a value must be a return statement: " + backupContext.getText(), backupContext.start.getLine(), backupContext.start.getCharPositionInLine(), backupContext.start.getTokenSource().getSourceName());
-					LiquidErrorHandler.errors++;
-					return null;
+					return ObjectType.VOID;
 				}
 			}
 
@@ -128,8 +134,9 @@ public final class SymbolUtils {
 		}
 	}
 
+	// make it private so the semantic analyzer can't avoid the Glide nullability check
 	@Contract(pure = true)
-	public static @Nullable ObjectType resolveValue(@NotNull FParser.ValueContext ctx, @NotNull ParserRuleContext backupContext) {
+	private static @Nullable ObjectType resolveValue(@NotNull FParser.ValueContext ctx, @NotNull Scope scope) {
 		if(ctx.BooleanLiteral() != null) {
 			debug("inferred value as a primitive bool");
 			return ObjectType.BOOL;
@@ -144,7 +151,7 @@ public final class SymbolUtils {
 			return ObjectType.STR;
 		} else if(ctx.IntegerLiteral() != null) {
 			debug("inferred value as an integer");
-			return ObjectType.I128; // to-do
+			return ObjectType.I32; // to-do
 		} else if(ctx.newStatement() != null) {
 			debug("inferred value as a droplet");
 			debug("attempting to resolve type name");
@@ -153,10 +160,18 @@ public final class SymbolUtils {
 			droplet.setIdentifier(name); // name
 			debug("resolved type name as " + name);
 			return droplet;
+		} else if(ctx.IDENTIFIER() != null) {
+			debug("inferring value from another variable");
+			var inf = scope.resolve_variable(VariableDescriptor.wildcard_from(ctx.IDENTIFIER().getText(), scope.hashCode()));
+			if(inf == null) {
+				debug("unable to infer from variable");
+			} else {
+				debug("inferred value as " + inf);
+			}
+			return inf;
 		} else {
-			error("cannot infer type of null initializer: " + backupContext.getText(), backupContext.start.getLine(), backupContext.start.getCharPositionInLine(), backupContext.start.getTokenSource().getSourceName());
-			LiquidErrorHandler.errors++;
-			return null;
+			// null initializers have the VOID type
+			return ObjectType.VOID;
 		}
 	}
 

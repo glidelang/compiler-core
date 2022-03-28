@@ -18,7 +18,7 @@ public class LiquidErrorHandler extends BaseErrorListener {
 
 	@Override
 	public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-		CompilerLogger.error(msg + "\nat " + recognizer.getInputStream().getSourceName() + " " + line + ":" + charPositionInLine + "\n");
+		CompilerLogger.error(msg, line, charPositionInLine, recognizer.getInputStream().getSourceName());
 		errors++;
 	}
 

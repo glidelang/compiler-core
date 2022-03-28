@@ -35,7 +35,7 @@ public final class Scope implements Cloneable {
 	/**
 	 * Variable mappings.
 	 */
-	public final Map<String, ObjectType> variableMap = new HashMap<>();
+	public final Map<VariableDescriptor, ObjectType> variableMap = new HashMap<>();
 
 	private final Scope parentScope;
 	@Getter
@@ -70,7 +70,7 @@ public final class Scope implements Cloneable {
 			if(ctx.function() != null) {
 				scope.functionMap.put(FunctionDescriptor.from(name, ctx.function().IDENTIFIER().getText(), ObjectType.fromTypeContext(ctx.function().functionSignature().type()), ctx.function().functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), ctx.function());
 			} else if(ctx.assignment() != null) {
-				scope.variableMap.put(ctx.assignment().IDENTIFIER().getText(), ObjectType.fromTypeContext(ctx.assignment().type()));
+				scope.variableMap.put(VariableDescriptor.from(ctx.assignment().IDENTIFIER().getText(), scope.hashCode(), ObjectType.fromAssignmentContext(ctx.assignment(), scope), ctx.assignment().variable_modifiers()), ObjectType.fromTypeContext(ctx.assignment().type()));
 			}
 		}
 		CompilerLogger.debug("function map: " + scope.functionMap);
@@ -159,12 +159,56 @@ public final class Scope implements Cloneable {
 	 * Resolves a function recursively through parent {@link Scope Scopes}. The semantic analyzer
 	 * is supposed to log errors where functions cannot be resolved.
 	 * @param identifier The Liquid identifier to resolve.
-	 * @return A function or {@code null} if not found.
+	 * @return A variable or {@code null} if not found.
 	 */
 	@Nullable
-	public ObjectType resolve_variable(String identifier) {
-		if(variableMap.containsKey(identifier)) return variableMap.get(identifier);
+	public ObjectType resolve_variable(@NotNull VariableDescriptor identifier) {
+		// assume it is wildcard always
+		debug("attempting to resolve variable " + identifier.toStringDebug() + " in " + variableMap.entrySet().size() + " entries");
+		VariableDescriptor desc = null;
+		for(var descriptorEntry : variableMap.entrySet()) {
+			var descriptor = descriptorEntry.getKey();
+			// check equality
+			debug("comparing " + identifier.toStringDebug() + " with " + descriptor.toStringDebug());
+			debug(descriptor.getIdentifier() + " == " + identifier.getIdentifier() + ": " + descriptor.getIdentifier().equals(identifier.getIdentifier()));
+			debug(descriptor.getScopeHashCode() + " == " + identifier.getScopeHashCode() + ": " + (descriptor.getScopeHashCode() == identifier.getScopeHashCode()));
+			if(descriptor.getIdentifier().equals(identifier.getIdentifier()) && descriptor.getScopeHashCode() == identifier.getScopeHashCode()) {
+				desc = descriptor;
+				debug("resolved variable as " + desc.toStringDebug());
+				break;
+			}
+		}
+		if(desc != null) return variableMap.get(desc);
 		else if(parent() != null) return parent().resolve_variable(identifier);
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Resolves a function recursively through parent {@link Scope Scopes}. The semantic analyzer
+	 * is supposed to log errors where functions cannot be resolved.
+	 * @param identifier The Liquid identifier to resolve.
+	 * @return A variable or {@code null} if not found.
+	 */
+	@Nullable
+	public VariableDescriptor resolve_variable_descriptor(@NotNull VariableDescriptor identifier) {
+		debug("attempting to resolve variable " + identifier.toStringDebug() + " in " + variableMap.entrySet().size() + " entries");
+		VariableDescriptor desc = null;
+		for(var descriptorEntry : variableMap.entrySet()) {
+			var descriptor = descriptorEntry.getKey();
+			// check equality
+			debug("comparing " + identifier.toStringDebug() + " with " + descriptor.toStringDebug());
+			debug(descriptor.getIdentifier() + " == " + identifier.getIdentifier() + ": " + descriptor.getIdentifier().equals(identifier.getIdentifier()));
+			debug(descriptor.getScopeHashCode() + " == " + identifier.getScopeHashCode() + ": " + (descriptor.getScopeHashCode() == identifier.getScopeHashCode()));
+			if(descriptor.getIdentifier().equals(identifier.getIdentifier()) && descriptor.getScopeHashCode() == identifier.getScopeHashCode()) {
+				desc = descriptor;
+				debug("resolved variable as " + desc.toStringDebug());
+				break;
+			}
+		}
+		if(desc != null) return desc;
+		else if(parent() != null) return parent().resolve_variable_descriptor(identifier);
 		else {
 			return null;
 		}

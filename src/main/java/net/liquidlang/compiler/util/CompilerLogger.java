@@ -74,9 +74,10 @@ public final class CompilerLogger {
 		error(s);
 		stderr.println("compilation terminated.");
 		if(Main.isVerbose()) {
-			stdout.println("\n stack trace (" + LocalDateTime.now() + ")");
+			System.out.println();
+			debug("\tstack trace (" + LocalDateTime.now() + ")");
 			var sw = StackWalker.getInstance(Set.of(StackWalker.Option.RETAIN_CLASS_REFERENCE, StackWalker.Option.SHOW_HIDDEN_FRAMES, StackWalker.Option.SHOW_REFLECT_FRAMES), 100);
-			sw.forEach(stackFrame -> stdout.println("\t" + stackFrame));
+			sw.forEach(stackFrame -> debug("\t\t" + stackFrame));
 		}
 		System.exit(1);
 	}

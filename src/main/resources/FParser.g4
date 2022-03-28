@@ -29,18 +29,18 @@ value: NullLiteral
                 | IDENTIFIER
                 | functionValue
                 | newStatement;
-passedParameterList: (value (',' value)*)?;
+passedParameterList: (valueExpr (',' valueExpr)*)?;
 newStatement: NEW IDENTIFIER;
 
 block: LBRACE body RBRACE;
-body: stmt* returnStatement?;
-stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | unsafeBlock;
+body: stmt*;
+stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | unsafeBlock | returnStatement;
 expr: assignment | valueExpr | reassignment;
-valueExpr: methodCall | value | castType | block | unsafeBlock;
+valueExpr: (methodCall | value | castType | block | unsafeBlock) (BANG | TILDE | QUESTION)?; // BANG will return a nullable value if not null, else it panics. TILDE returns the evaluation of a Boolean expression 'valueExpr != null'
 functionType: FUNCTION functionSignature;
 functionValue: FUNCTION IDENTIFIER functionSignature;
 
-type: IDENTIFIER |
+type: (IDENTIFIER |
         I8 |
         I16 |
         I32 |
@@ -57,7 +57,8 @@ type: IDENTIFIER |
         VOID |
         CHAR |
         functionType |
-        BOOL;
+        BOOL)
+        QUESTION?;
 
 methodCall: IDENTIFIER (ARROW type)? '(' passedParameterList ')';
 
@@ -70,7 +71,7 @@ elseStatement: ELSE block;
 whileStatement: WHILE valueExpr block;
 loopStatement: LOOP block;
 forStatement: FOR IDENTIFIER IN valueExpr block;
-returnStatement: RETURN valueExpr ';'? | valueExpr;
+returnStatement: RETURN valueExpr? ';';
 
 unsafeBlock: UNSAFE block;
 
@@ -80,4 +81,4 @@ dropletAssignment: LET dropletVarModifiers* IDENTIFIER (COLON type)? ASSIGN valu
 dropletBody: (function | dropletAssignment)*;
 dropletDecl: DROPLET dropletBlock;
 
-castType: type LBRACE valueExpr RBRACE;
+castType: type LPAREN valueExpr RPAREN;

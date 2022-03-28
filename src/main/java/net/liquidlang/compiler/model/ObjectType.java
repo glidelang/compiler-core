@@ -1,5 +1,6 @@
 package net.liquidlang.compiler.model;
 
+import lombok.Getter;
 import lombok.Setter;
 import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.semantics.SemanticAnalyzer;
@@ -84,8 +85,17 @@ public enum ObjectType {
 	/**
 	 * Type name
 	 */
+	@Getter
 	@Setter
 	private String identifier = null;
+
+	/**
+	 * Whether the {@link ObjectType} could be null.
+	 */
+	@Getter
+	@Setter
+	@SuppressWarnings("NonFinalFieldInEnum")
+	private boolean isNullable = false;
 
 	/**
 	 * Creates a {@link ObjectType} from the type context.
@@ -94,30 +104,33 @@ public enum ObjectType {
 	 */
 	@Contract(pure = true)
 	public static ObjectType fromTypeContext(FParser.@Nullable TypeContext ctx) {
+		ObjectType type;
 		if(ctx == null) return VOID;
-		else if(ctx.functionType() != null) return FUNC;
-		else if(ctx.CHAR() != null) return CHAR;
+		else if(ctx.functionType() != null) type = FUNC;
+		else if(ctx.CHAR() != null) type = CHAR;
 		// boolean
-		else if(ctx.BOOL() != null) return BOOL;
+		else if(ctx.BOOL() != null) type = BOOL;
 		// signed
-		else if(ctx.I8() != null) return I8;
-		else if(ctx.I16() != null) return I16;
-		else if(ctx.I32() != null) return I32;
-		else if(ctx.I64() != null) return I64;
-		else if(ctx.I128() != null) return I128;
+		else if(ctx.I8() != null) type = I8;
+		else if(ctx.I16() != null) type = I16;
+		else if(ctx.I32() != null) type = I32;
+		else if(ctx.I64() != null) type = I64;
+		else if(ctx.I128() != null) type = I128;
 		// unsigned
-		else if(ctx.U8() != null) return U8;
-		else if(ctx.U16() != null) return U16;
-		else if(ctx.U32() != null) return U32;
-		else if(ctx.U64() != null) return U64;
-		else if(ctx.U128() != null) return U128;
+		else if(ctx.U8() != null) type = U8;
+		else if(ctx.U16() != null) type = U16;
+		else if(ctx.U32() != null) type = U32;
+		else if(ctx.U64() != null) type = U64;
+		else if(ctx.U128() != null) type = U128;
 		// droplets
 		else if(ctx.IDENTIFIER() != null) {
-			var type = DROPLET;
-			type.identifier = ctx.IDENTIFIER().getText();
-			return type;
-		} else if(ctx.STR() != null) return STR;
-		else return VOID;
+			var t = DROPLET;
+			t.identifier = ctx.IDENTIFIER().getText();
+			type = t;
+		} else if(ctx.STR() != null) type = STR;
+		else type = VOID;
+		type.setNullable(ctx.QUESTION() != null);
+		return type;
 	}
 
 	/**
