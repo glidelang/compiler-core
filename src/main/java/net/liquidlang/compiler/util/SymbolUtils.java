@@ -24,8 +24,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static net.liquidlang.compiler.util.CompilerLogger.debug;
-import static net.liquidlang.compiler.util.CompilerLogger.error;
+import static net.liquidlang.compiler.util.CompilerLogger.*;
 
 public final class SymbolUtils {
 
@@ -85,20 +84,22 @@ public final class SymbolUtils {
 			return null;
 		} else {
 
+			ObjectType objectType;
+
 			// start inferring type
 			debug("inferring type of entity '" + backupContext.getText() + "'");
 
 			// cast types are the easiest to infer
 			if(ctx.castType() != null) {
 				debug("inferring from cast");
-				return ObjectType.fromTypeContext(ctx.castType().type());
+				objectType = ObjectType.fromTypeContext(ctx.castType().type());
 			}
 
 			// for direct value input
 			else if(ctx.value() != null) {
 				// glide values can NEVER be null.
 				debug("inferring from direct value");
-				return resolveValue(ctx.value(), scope);
+				objectType = resolveValue(ctx.value(), scope);
 			}
 
 			// for function calls
@@ -116,7 +117,7 @@ public final class SymbolUtils {
 					LiquidErrorHandler.errors++;
 					return null;
 				}
-				return ObjectType.fromTypeContext(func.functionSignature().type());
+				objectType = ObjectType.fromTypeContext(func.functionSignature().type());
 			}
 
 			else if(ctx.unsafeBlock() != null || ctx.block() != null) {
@@ -125,11 +126,24 @@ public final class SymbolUtils {
 				if(SemanticAnalyzer.getReturns(body) != null) {
 					return typeCheckAndInference(Objects.requireNonNull(SemanticAnalyzer.getReturns(body)).valueExpr(), ctx, scope);
 				} else {
-					return ObjectType.VOID;
+					objectType = ObjectType.VOID;
 				}
 			}
 
 			else throw new IllegalStateException();
+
+			for(var op : ctx.nullValueExprOperators()) {
+				if(op.BANG() != null) {
+					// objectType panics if null
+					assert objectType != null;
+					objectType.setNullable(false);
+				} else if(op.TILDE() != null) {
+					// ~ returns bool on nullability
+					objectType = ObjectType.BOOL;
+				}
+			}
+
+			return objectType;
 
 		}
 	}
@@ -170,7 +184,6 @@ public final class SymbolUtils {
 			}
 			return inf;
 		} else {
-			// null initializers have the VOID type
 			return ObjectType.VOID;
 		}
 	}

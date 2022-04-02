@@ -5,8 +5,8 @@ import net.liquidlang.compiler.Main;
 import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.ast.FParserBaseListener;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
-import net.liquidlang.compiler.model.*;
 import net.liquidlang.compiler.model.Module;
+import net.liquidlang.compiler.model.*;
 import net.liquidlang.compiler.util.SymbolUtils;
 import org.antlr.v4.runtime.RuleContext;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -15,7 +15,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +34,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 	// We don't want to let the compiler crash to a StackOverflowError because we recursively
 	// tried parsing modules.
-	private static final List<String> circularDependencyPrevention = new ArrayList<>();
+	private static final List<String> modulesParsed = new ArrayList<>();
 	private final StopWatch stopWatch = new StopWatch();
 
 	/**
@@ -248,15 +247,26 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		var formalList = fun.functionSignature().formalParameterList().formalParameter().stream().map(FParser.FormalParameterContext::type).map(ObjectType::fromTypeContext).toList();
 		var passedList = ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList();
 		debug("verifying function signature correspondence");
-		if(!formalList.equals(passedList)) {
+		if(formalList.size() != passedList.size()) {
 			debug("differing parameter count; reporting error");
 			error("formal parameter list " + formalList + " does not match with actual parameters passed " + passedList + ": " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			LiquidErrorHandler.errors++;
+		} else {
+			debug("type checking parameters");
+			for(int i = 0; i < formalList.size(); i++) {
+				ObjectType formal = formalList.get(i);
+				ObjectType passed = passedList.get(i);
+				debug("index " + i + ": (formal) " + formal + " vs (passed) " + passed);
+				if(formal != passed) {
+					if(formal.isNullable() && passed == ObjectType.VOID) {
+						debug("requirement fulfilled; nullable type and void value");
+					} else {
+						error("incompatible types: " + ctx.passedParameterList().valueExpr(i).getText() + " of type '" + formal + "' differs from type '" + passed + "' expected in '" + fun.functionSignature().formalParameterList().formalParameter(i).getText() + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+						LiquidErrorHandler.errors++;
+					}
+				}
+			}
 		}
-
-	}
-
-	private static void typeCheck() {
 
 	}
 
@@ -299,10 +309,10 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 				if(obj != eval && !obj.isNullable()) {
 					debug("incompatible types in full variable");
-					error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					error("incompatible types: " + ctx.valueExpr().getText() + " of type '" + eval + "' differs from type '" + obj + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				} else if(obj != eval && eval != ObjectType.VOID) {
 					debug("incompatible types in nullable variable");
-					error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					error("incompatible types: " + ctx.valueExpr().getText() + " of type '" + eval + "' differs from type '" + obj + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				}
 
 			}
@@ -350,25 +360,13 @@ public class SemanticAnalyzer extends FParserBaseListener {
 
 			if(obj != eval && !obj.isNullable()) {
 				debug("incompatible types in full variable");
-				error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				error("incompatible types: " + ctx.valueExpr().getText() + " of type '" + eval + "' differs from type '" + obj + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			} else if(obj != eval && eval != ObjectType.VOID) {
 				debug("incompatible types in nullable variable");
-				error("incompatible types: " + ctx.valueExpr().getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+				error("incompatible types: " + ctx.valueExpr().getText() + " of type '" + eval + "' differs from type '" + obj + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 			}
 		}
 
-	}
-
-	@SuppressWarnings("SameParameterValue")
-	private <T> @NotNull Set<T> findDuplicates(@NotNull Collection<T> collection) {
-		Set<T> duplicates = new LinkedHashSet<>();
-		Set<T> uniques = new HashSet<>();
-		for(T t : collection) {
-			if(!uniques.add(t)) {
-				duplicates.add(t);
-			}
-		}
-		return duplicates;
 	}
 
 	@SuppressWarnings("all")
@@ -411,8 +409,8 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				LiquidErrorHandler.errors++;
 			} else {
 				debug("adding module name to module access order list");
-				circularDependencyPrevention.add("'" + x + "'");
-				if(!findDuplicatePattern(circularDependencyPrevention)) {
+				modulesParsed.add("'" + x + "'");
+				if(!findDuplicatePattern(modulesParsed)) {
 					var mod = Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
 					builder.importModule(mod, currentScope);
 				}

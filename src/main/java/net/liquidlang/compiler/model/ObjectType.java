@@ -159,7 +159,7 @@ public enum ObjectType {
 	@NotNull
 	@Override
 	public String toString() {
-		return isPrimitive() ? name().toLowerCase(Locale.ROOT) : identifier;
+		return (isPrimitive() ? name().toLowerCase(Locale.ROOT) : identifier) + (isNullable ? "?" : "");
 	}
 
 }

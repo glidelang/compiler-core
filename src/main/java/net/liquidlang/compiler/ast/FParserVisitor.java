@@ -107,6 +107,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpr(FParser.ExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#nullValueExprOperators}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#valueExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

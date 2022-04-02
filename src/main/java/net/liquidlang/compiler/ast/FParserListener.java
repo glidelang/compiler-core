@@ -168,6 +168,16 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitExpr(FParser.ExprContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FParser#nullValueExprOperators}.
+	 * @param ctx the parse tree
+	 */
+	void enterNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#nullValueExprOperators}.
+	 * @param ctx the parse tree
+	 */
+	void exitNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FParser#valueExpr}.
 	 * @param ctx the parse tree
 	 */

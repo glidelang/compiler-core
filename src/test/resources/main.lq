@@ -6,8 +6,12 @@
 import mod::hello;
 import mod::hi;
 
-pub inline func stringFn(s: str) {}
+// pub inline func stringFn(s: str) {}
+pub inline func stringFn(s: str) -> str { return "YES"; }
 pub unsafe func fn(l: i32) -> u32 {
+    return l;
+}
+pub unsafe func fn2(l: i32?) -> u32 {
     return l;
 }
 
@@ -16,7 +20,7 @@ pub func main(l: str) {
     if true {
             let x: i32 = 100;
 
-            let y = 1;
+            let mut y = 1;
             y = 69;
 
             stringFn("Hello");
@@ -25,8 +29,12 @@ pub func main(l: str) {
                 fn(1337);
             }
             let x2: str? = "500";
-            let y2: u32? = u32?(x2);
-            let a: str? = null;
+            let y2: i32? = i32?(x2);
+            fn2(null!);
+            let mut a: str? = null;
+            a = stringFn->str("no");
+            let mut b = x2~;
+            b = false;
             hello();
     }
 }

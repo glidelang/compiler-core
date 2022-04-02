@@ -36,7 +36,8 @@ block: LBRACE body RBRACE;
 body: stmt*;
 stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | unsafeBlock | returnStatement;
 expr: assignment | valueExpr | reassignment;
-valueExpr: (methodCall | value | castType | block | unsafeBlock) (BANG | TILDE | QUESTION)?; // BANG will return a nullable value if not null, else it panics. TILDE returns the evaluation of a Boolean expression 'valueExpr != null'
+nullValueExprOperators: BANG | TILDE; // BANG will return a nullable value if not null, else it panics. TILDE returns the evaluation of a Boolean expression 'valueExpr != null'
+valueExpr: (methodCall | value | castType | block | unsafeBlock) nullValueExprOperators*;
 functionType: FUNCTION functionSignature;
 functionValue: FUNCTION IDENTIFIER functionSignature;
 

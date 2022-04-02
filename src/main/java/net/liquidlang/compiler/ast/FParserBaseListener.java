@@ -208,6 +208,18 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterValueExpr(FParser.ValueExprContext ctx) { }
 	/**
 	 * {@inheritDoc}

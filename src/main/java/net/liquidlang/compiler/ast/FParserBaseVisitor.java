@@ -129,6 +129,13 @@ public class FParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> implement
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitNullValueExprOperators(FParser.NullValueExprOperatorsContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitValueExpr(FParser.ValueExprContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
