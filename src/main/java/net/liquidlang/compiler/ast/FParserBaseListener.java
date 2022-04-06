@@ -100,6 +100,18 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterParameterlessFunctionSignature(FParser.ParameterlessFunctionSignatureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitParameterlessFunctionSignature(FParser.ParameterlessFunctionSignatureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterFormalParameterList(FParser.FormalParameterListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -119,6 +131,18 @@ public class FParserBaseListener implements FParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFormalParameter(FParser.FormalParameterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterTypeList(FParser.TypeListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTypeList(FParser.TypeListContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -256,6 +280,18 @@ public class FParserBaseListener implements FParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterClosure(FParser.ClosureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitClosure(FParser.ClosureContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterType(FParser.TypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -275,6 +311,18 @@ public class FParserBaseListener implements FParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMethodCall(FParser.MethodCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterValuedMethodCall(FParser.ValuedMethodCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitValuedMethodCall(FParser.ValuedMethodCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -9,6 +9,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +40,12 @@ public final class Scope implements Cloneable {
 
 	private final Scope parentScope;
 	@Getter
-	private final String name;
+	private final String moduleName;
 	// random, for debugging
 	private final UUID uuid = UUID.randomUUID();
+
+	@Range(from = 0L, to = Long.MAX_VALUE)
+	public long closureCount = 0;
 
 	/**
 	 * Creates a scope with the given parent.
@@ -49,7 +53,7 @@ public final class Scope implements Cloneable {
 	@Contract(pure = true)
 	private Scope(@Nullable Scope parent, String name) {
 		this.parentScope = parent;
-		this.name = name;
+		this.moduleName = name;
 	}
 
 	/**
@@ -68,7 +72,7 @@ public final class Scope implements Cloneable {
 		for(FParser.LineContext ctx : context.line()) {
 			// check if the context is a function context
 			if(ctx.function() != null) {
-				scope.functionMap.put(FunctionDescriptor.from(name, ctx.function().IDENTIFIER().getText(), ObjectType.fromTypeContext(ctx.function().functionSignature().type()), ctx.function().functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), ctx.function());
+				scope.functionMap.put(FunctionDescriptor.from(name, ctx.function().IDENTIFIER().getText(), ObjectType.fromTypeContext(ctx.function().functionSignature().type()), ctx.function().func_modifiers(), ctx.function().functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), ctx.function());
 			} else if(ctx.assignment() != null) {
 				scope.variableMap.put(VariableDescriptor.from(ctx.assignment().IDENTIFIER().getText(), scope.hashCode(), ObjectType.fromAssignmentContext(ctx.assignment(), scope), ctx.assignment().variable_modifiers()), ObjectType.fromTypeContext(ctx.assignment().type()));
 			}
@@ -84,7 +88,7 @@ public final class Scope implements Cloneable {
 	@NotNull
 	@Contract(value = "-> new", pure = true)
 	public Scope child() {
-		return new Scope(this, name);
+		return new Scope(this, moduleName);
 	}
 
 	@Nullable
@@ -119,9 +123,9 @@ public final class Scope implements Cloneable {
 				var functionDescriptor = fun.getKey();
 				debug("trying to resolve: " + identifier);
 				debug("trying function descriptor: " + functionDescriptor);
-				debug(identifier.ignoringReturnType().getMangledIdentifier() + " vs " + functionDescriptor.ignoringReturnType().getMangledIdentifier());
-				debug("do they match: " + identifier.ignoringReturnType().getMangledIdentifier().equals(functionDescriptor.ignoringReturnType().getMangledIdentifier()));
-				if(identifier.ignoringReturnType().getMangledIdentifier().equals(functionDescriptor.ignoringReturnType().getMangledIdentifier())) {
+				debug(identifier.ignoringReturnTypeAndModifiers().getMangledIdentifier() + " vs " + functionDescriptor.ignoringReturnTypeAndModifiers().getMangledIdentifier());
+				debug("do they match: " + identifier.ignoringReturnTypeAndModifiers().getMangledIdentifier().equals(functionDescriptor.ignoringReturnTypeAndModifiers().getMangledIdentifier()));
+				if(identifier.ignoringReturnTypeAndModifiers().getMangledIdentifier().equals(functionDescriptor.ignoringReturnTypeAndModifiers().getMangledIdentifier())) {
 					if(!duplicateFlag) {
 						CompilerLogger.debug("resolved function with identifier " + functionDescriptor.getMangledIdentifier() + " in scope " + Integer.toHexString(hashCode()));
 						context = functionMap.get(functionDescriptor);

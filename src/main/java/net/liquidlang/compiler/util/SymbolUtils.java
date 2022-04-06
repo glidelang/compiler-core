@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -28,15 +27,12 @@ import static net.liquidlang.compiler.util.CompilerLogger.*;
 
 public final class SymbolUtils {
 
-	@NotNull
-	private static final MessageDigest digest = algo();
-
 	private SymbolUtils() {
 		//no instance
 	}
 
 	@SneakyThrows
-	@Contract("-> new")
+	@Contract(pure = true)
 	private static MessageDigest algo() {
 		return MessageDigest.getInstance("SHA3-224");
 	}
@@ -72,7 +68,7 @@ public final class SymbolUtils {
 	/**
 	 * This method is used to validate that the type of the variable matches the type of the value, through eager inference of value expressions.
 	 * @param ctx The nullable context to validate. The compiler will not throw an exception but instead raise the error flag in {@link LiquidErrorHandler}.
-	 * @param backupContext The parent context; it is used to record any errors made while inferring the type.@
+	 * @param backupContext The parent context; it is used to record any errors made while inferring the type.
 	 * @param scope The scope of the assignment. It will be used to get the type of variables and functions.
 	 * @return The {@link ObjectType} of the value expression if not null, else {@code null}.
 	 */
@@ -111,7 +107,7 @@ public final class SymbolUtils {
 						.stream() // the order is important
 						.map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, scope))
 						.toList();
-				var func = scope.resolve_function(FunctionDescriptor.from(scope.getName(), ctx.methodCall().IDENTIFIER().getText(), null, types));
+				var func = scope.resolve_function(FunctionDescriptor.from(scope.getModuleName(), ctx.methodCall().IDENTIFIER().getText(), null, null, types));
 				if(func == null) {
 					error("cannot infer type: " + backupContext.getText(), backupContext.start.getLine(), backupContext.start.getCharPositionInLine(), backupContext.start.getTokenSource().getSourceName());
 					LiquidErrorHandler.errors++;
@@ -152,21 +148,63 @@ public final class SymbolUtils {
 	@Contract(pure = true)
 	private static @Nullable ObjectType resolveValue(@NotNull FParser.ValueContext ctx, @NotNull Scope scope) {
 		if(ctx.BooleanLiteral() != null) {
+
 			debug("inferred value as a primitive bool");
 			return ObjectType.BOOL;
+
 		} else if(ctx.functionValue() != null) {
+
 			debug("inferred value as a function pointer");
-			return ObjectType.FUNC;
+			var func = ObjectType.FUNC;
+			func.setDescriptor(FunctionDescriptor.from(
+					scope.getModuleName(),
+					ctx.functionValue().IDENTIFIER().getText(),
+					ctx.functionValue().parameterlessFunctionSignature().type() != null
+							? ObjectType.fromTypeContext(ctx.functionValue().parameterlessFunctionSignature().type())
+							: ObjectType.VOID,
+					null,
+					ctx.functionValue().parameterlessFunctionSignature().typeList().type()
+							.stream()
+							.map(ObjectType::fromTypeContext)
+							.collect(Collectors.toList())
+			));
+			return func;
+
+		} else if(ctx.closure() != null) {
+
+			debug("inferred value as a closure");
+			var func = ObjectType.FUNC;
+			func.setDescriptor(FunctionDescriptor.from(
+					scope.getModuleName(),
+					getClosureFunctionName(scope.closureCount++),
+					ctx.closure().functionSignature().type() != null
+							? ObjectType.fromTypeContext(ctx.functionValue().parameterlessFunctionSignature().type())
+							: ObjectType.VOID,
+					null,
+					ctx.closure().functionSignature().formalParameterList().formalParameter()
+							.stream()
+							.map(e -> ObjectType.fromTypeContext(e.type()))
+							.collect(Collectors.toList())
+			));
+			return func;
+
 		} else if(ctx.CharacterLiteral() != null) {
+
 			debug("inferred value as a primitive char");
 			return ObjectType.CHAR;
+
 		} else if(ctx.StringLiteral() != null) {
+
 			debug("inferred value as a primitive string");
 			return ObjectType.STR;
+
 		} else if(ctx.IntegerLiteral() != null) {
+
 			debug("inferred value as an integer");
-			return ObjectType.I32; // to-do
+			return ObjectType.I32;
+
 		} else if(ctx.newStatement() != null) {
+
 			debug("inferred value as a droplet");
 			debug("attempting to resolve type name");
 			var droplet = ObjectType.DROPLET;
@@ -174,7 +212,9 @@ public final class SymbolUtils {
 			droplet.setIdentifier(name); // name
 			debug("resolved type name as " + name);
 			return droplet;
+
 		} else if(ctx.IDENTIFIER() != null) {
+
 			debug("inferring value from another variable");
 			var inf = scope.resolve_variable(VariableDescriptor.wildcard_from(ctx.IDENTIFIER().getText(), scope.hashCode()));
 			if(inf == null) {
@@ -183,9 +223,49 @@ public final class SymbolUtils {
 				debug("inferred value as " + inf);
 			}
 			return inf;
+
 		} else {
 			return ObjectType.VOID;
 		}
+	}
+
+	@Contract(pure = true)
+	private static @NotNull String getClosureFunctionName(long c) {
+		return "$$$closure" + c + "$$$";
+	}
+
+	/**
+	 * Checks all return statements to make sure that their values conform
+	 * to the specified {@link ObjectType}, which is the return type
+	 * of the function.
+	 * @param contexts The collection of {@link net.liquidlang.compiler.ast.FParser.StmtContext StmtContexts} to check.
+	 * @param returnType The {@link ObjectType} in which all return statements given in {@code contexts} must conform to.
+	 * @param scope The scope to search variables for, if necessary.
+	 * @param backup The backup context for error reporting.
+	 */
+	public static void checkReturnStatements(@NotNull Collection<FParser.StmtContext> contexts, @NotNull ObjectType returnType, @NotNull Scope scope, @NotNull ParserRuleContext backup) {
+		contexts.stream()
+				.filter(ctx -> ctx.returnStatement() != null)
+				.filter(ctx -> typeCheckAndInference(ctx.returnStatement().valueExpr(), backup, scope) != returnType)
+				.forEach(ctx -> {
+					error("non-matching return types: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					LiquidErrorHandler.errors++;
+				});
+	}
+
+	/**
+	 * Returns the (direct or indirect) parent of the given context {@code context},
+	 * based on the class parameter {@code clazz}.
+	 * @param context The {@link RuleContext} to check. If {@code null}, returns {@code null}.
+	 * @param clazz The class of the {@link ParserRuleContext} to use as the parent class. Can never be {@code null}.
+	 * @return The parent context if found, else {@code null}.
+	 */
+	@SuppressWarnings("unchecked")
+	@Contract("null, _ -> null")
+	public static <T extends RuleContext> @Nullable T getNearestParentOfContext(@Nullable RuleContext context, @NotNull Class<? extends RuleContext> clazz) {
+		if(context == null || context.parent == null) return null;
+		else if(context.parent.getClass() == clazz) return (T) context;
+		else return getNearestParentOfContext(context.parent, clazz);
 	}
 
 }

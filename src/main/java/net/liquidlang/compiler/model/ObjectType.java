@@ -4,16 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 import net.liquidlang.compiler.ast.FParser;
 import net.liquidlang.compiler.semantics.SemanticAnalyzer;
+import net.liquidlang.compiler.util.Modules;
 import net.liquidlang.compiler.util.SymbolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Object types.
  */
+@SuppressWarnings("NonFinalFieldInEnum")
 public enum ObjectType {
 
 	/**
@@ -94,8 +97,16 @@ public enum ObjectType {
 	 */
 	@Getter
 	@Setter
-	@SuppressWarnings("NonFinalFieldInEnum")
 	private boolean isNullable = false;
+
+	/**
+	 * If the enum instance has a value of {@link #FUNC},
+	 * describes the function signature. Note that the {@code identifier}
+	 * will <em>always</em> be {@code "__NULL_IDENTIFIER__"}.
+	 */
+	@Getter
+	@Setter
+	private FunctionDescriptor descriptor = null;
 
 	/**
 	 * Creates a {@link ObjectType} from the type context.
@@ -106,7 +117,19 @@ public enum ObjectType {
 	public static ObjectType fromTypeContext(FParser.@Nullable TypeContext ctx) {
 		ObjectType type;
 		if(ctx == null) return VOID;
-		else if(ctx.functionType() != null) type = FUNC;
+		else if(ctx.functionType() != null) {
+			type = FUNC;
+			type.setDescriptor(FunctionDescriptor.from(
+					Modules.getModuleNameFromContext(ctx),
+					"__NULL_IDENTIFIER__",
+					fromTypeContext(ctx.functionType().parameterlessFunctionSignature().type()),
+					null, // don't care about them
+					ctx.functionType().parameterlessFunctionSignature().typeList().type()
+							.stream()
+							.map(ObjectType::fromTypeContext)
+							.collect(Collectors.toList())
+			));
+		}
 		else if(ctx.CHAR() != null) type = CHAR;
 		// boolean
 		else if(ctx.BOOL() != null) type = BOOL;
@@ -159,7 +182,18 @@ public enum ObjectType {
 	@NotNull
 	@Override
 	public String toString() {
-		return (isPrimitive() ? name().toLowerCase(Locale.ROOT) : identifier) + (isNullable ? "?" : "");
+		StringBuilder builder = new StringBuilder();
+		builder.append(isPrimitive() ? name().toLowerCase(Locale.ROOT) : identifier).append(isNullable ? "?" : "");
+		if(descriptor != null) {
+			builder.append("(");
+			descriptor.getParameterTypes().forEach(builder::append);
+			builder.append(")");
+			if(descriptor.getReturnType() != null) {
+				builder.append(" -> ");
+				builder.append(descriptor.getReturnType());
+			}
+		}
+		return builder.toString();
 	}
 
 }

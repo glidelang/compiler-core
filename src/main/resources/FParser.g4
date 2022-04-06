@@ -18,9 +18,11 @@ importStatement: IMPORT (IDENTIFIER | MODULE) COLONCOLON (IDENTIFIER | '*') (COL
 
 function: func_modifiers*? FUNCTION IDENTIFIER functionSignature block;
 functionSignature: '(' formalParameterList ')' (ARROW type)?;
+parameterlessFunctionSignature: '(' typeList ')' (ARROW type)?;
 
 formalParameterList: (formalParameter (',' formalParameter)*)?;
 formalParameter: IDENTIFIER COLON type;
+typeList: (type (',' type)*);
 value: NullLiteral
                 | BooleanLiteral
                 | IntegerLiteral
@@ -28,6 +30,7 @@ value: NullLiteral
                 | CharacterLiteral
                 | IDENTIFIER
                 | functionValue
+                | closure
                 | newStatement;
 passedParameterList: (valueExpr (',' valueExpr)*)?;
 newStatement: NEW IDENTIFIER;
@@ -37,9 +40,10 @@ body: stmt*;
 stmt: ifStatement | expr ';' | whileStatement | loopStatement | forStatement | importStatement | unsafeBlock | returnStatement;
 expr: assignment | valueExpr | reassignment;
 nullValueExprOperators: BANG | TILDE; // BANG will return a nullable value if not null, else it panics. TILDE returns the evaluation of a Boolean expression 'valueExpr != null'
-valueExpr: (methodCall | value | castType | block | unsafeBlock) nullValueExprOperators*;
-functionType: FUNCTION functionSignature;
-functionValue: FUNCTION IDENTIFIER functionSignature;
+valueExpr: '('? (methodCall | value | castType | block | unsafeBlock) nullValueExprOperators* ')'?;
+functionType: FUNCTION parameterlessFunctionSignature;
+functionValue: FUNCTION IDENTIFIER parameterlessFunctionSignature;
+closure: FUNCTION functionSignature block;
 
 type: (IDENTIFIER |
         I8 |
@@ -61,7 +65,8 @@ type: (IDENTIFIER |
         BOOL)
         QUESTION?;
 
-methodCall: IDENTIFIER (ARROW type)? '(' passedParameterList ')';
+methodCall: IDENTIFIER (ARROW type)? '(' passedParameterList ')' | valuedMethodCall;
+valuedMethodCall: '(' valueExpr ')' '(' passedParameterList ')';
 
 assignment: LET variable_modifiers* IDENTIFIER (COLON type)? ASSIGN valueExpr;
 reassignment: IDENTIFIER ASSIGN valueExpr;

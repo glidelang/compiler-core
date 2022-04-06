@@ -1,8 +1,11 @@
-package net.liquidlang.compiler.semantics;
+package net.liquidlang.compiler.util;
 
 import net.liquidlang.compiler.Main;
 import net.liquidlang.compiler.ast.FParser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +16,7 @@ import java.util.Set;
 /**
  * Manages imports from a multi-module project.
  */
-public final class ImportManager {
+public final class Modules {
 
 	private static final Set<String> mods = new HashSet<>();
 
@@ -36,6 +39,11 @@ public final class ImportManager {
 			if(p.getFileName().toString().equals(name + ".lq")) return p;
 		}
 		return null;
+	}
+
+	@Contract(pure = true)
+	public static @NotNull String getModuleNameFromContext(@NotNull ParserRuleContext context) {
+		return StringUtils.removeEnd(context.start.getTokenSource().getSourceName(), ".lq");
 	}
 
 }

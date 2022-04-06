@@ -7,6 +7,7 @@ import net.liquidlang.compiler.ast.FParserBaseListener;
 import net.liquidlang.compiler.err.LiquidErrorHandler;
 import net.liquidlang.compiler.model.Module;
 import net.liquidlang.compiler.model.*;
+import net.liquidlang.compiler.util.Modules;
 import net.liquidlang.compiler.util.SymbolUtils;
 import org.antlr.v4.runtime.RuleContext;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -175,8 +176,8 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				LiquidErrorHandler.errors++;
 			} else {
 				debug("checking type of return value");
+				SymbolUtils.checkReturnStatements(ctx.block().body().stmt(), ObjectType.fromTypeContext(ctx.functionSignature().type()), currentScope, ctx);
 			}
-			// to-do check type of returned object
 		}
 
 		boolean isStatic = false;
@@ -214,29 +215,43 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		// through the function call: e.g. function->void(); will never be null
 		ObjectType type = ctx.type() != null ? ObjectType.fromTypeContext(ctx.type()) : null;
 
-		var fun = currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new)));
-		if(fun == null) {
-			// function might be in a different module
-			for(Module module : builder.getImportedModules()) {
-				if(fun == null) {
-					fun = currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), type, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new)));
-				} else {
-					break;
-				}
-			}
-			if(fun == null) {
-				debug("unable to resolve function in scope " + Integer.toHexString(currentScope.hashCode()));
+		FunctionDescriptor fun = null;
+		if(ctx.valuedMethodCall() != null) {
+			var infer = SymbolUtils.typeCheckAndInference(ctx.valuedMethodCall().valueExpr(), ctx, currentScope);
+			if(infer == null) {
+				return;
+			} else if(infer.getDescriptor() == null) {
+				debug("unable to resolve function from value expression: actual type is " + infer);
 				error("unknown function: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
-				return;
+			} else {
+				fun = infer.getDescriptor();
+			}
+		} else {
+			fun = FunctionDescriptor.from(currentScope.resolve_function(FunctionDescriptor.from(name, ctx.IDENTIFIER().getText(), type, null, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new))));
+			if(fun == null) {
+				// function might be in a different module
+				for(Module module : builder.getImportedModules()) {
+					if(fun == null) {
+						fun = FunctionDescriptor.from(currentScope.resolve_function(FunctionDescriptor.from(module.getName(), ctx.IDENTIFIER().getText(), type, null, ctx.passedParameterList().valueExpr().stream().map(valueContext -> SymbolUtils.typeCheckAndInference(valueContext, ctx, currentScope)).toArray(ObjectType[]::new))));
+					} else {
+						break;
+					}
+				}
+				if(fun == null) {
+					debug("unable to resolve function in scope " + Integer.toHexString(currentScope.hashCode()));
+					error("unknown function: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+					LiquidErrorHandler.errors++;
+					return;
+				}
 			}
 		}
 
-		debug("resolved function call '" + ctx.getText() + "' as " + SymbolUtils.functionToString(fun));
-		if(fun.func_modifiers().stream().map(RuleContext::getText).collect(Collectors.joining()).contains("unsafe")) {
-			debug("function call '" + SymbolUtils.functionToString(fun) + "' is unsafe");
+		debug("resolved function call '" + ctx.getText() + "' as " + fun);
+		if(Objects.requireNonNull(fun).getModifiers().stream().map(RuleContext::getText).collect(Collectors.joining()).contains("unsafe")) {
+			debug("function call '" + fun + "' is unsafe");
 			debug("checking if it is in an unsafe block");
-			if(fun.parent.parent instanceof FParser.UnsafeBlockContext) {
+			if(SymbolUtils.getNearestParentOfContext(ctx.parent, FParser.UnsafeBlockContext.class) == null) {
 				debug("unsafe block requirement not fulfilled");
 				error("unsafe function must be in unsafe block: " + ctx.getText(), ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
@@ -244,8 +259,8 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				debug("unsafe block requirement fulfilled");
 			}
 		}
-		var formalList = fun.functionSignature().formalParameterList().formalParameter().stream().map(FParser.FormalParameterContext::type).map(ObjectType::fromTypeContext).toList();
-		var passedList = ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList();
+		var formalList = fun.getParameterTypes();
+		List<ObjectType> passedList = ctx.passedParameterList() != null ? ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList() : Collections.emptyList();
 		debug("verifying function signature correspondence");
 		if(formalList.size() != passedList.size()) {
 			debug("differing parameter count; reporting error");
@@ -261,7 +276,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 					if(formal.isNullable() && passed == ObjectType.VOID) {
 						debug("requirement fulfilled; nullable type and void value");
 					} else {
-						error("incompatible types: " + ctx.passedParameterList().valueExpr(i).getText() + " of type '" + formal + "' differs from type '" + passed + "' expected in '" + fun.functionSignature().formalParameterList().formalParameter(i).getText() + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
+						error("incompatible types: " + ctx.passedParameterList().valueExpr(i).getText() + " of type '" + formal + "' differs from type '" + passed + "' expected in '" + formalList + "'", ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 						LiquidErrorHandler.errors++;
 					}
 				}
@@ -401,9 +416,9 @@ public class SemanticAnalyzer extends FParserBaseListener {
 	@Override
 	public void enterImportStatement(FParser.ImportStatementContext ctx) {
 		debug("entered import statement");
-		if(ImportManager.isLocalImport(ctx)) {
+		if(Modules.isLocalImport(ctx)) {
 			var x = ctx.IDENTIFIER().get(ctx.IDENTIFIER().size() - 1).getText();
-			if(!ImportManager.isContainedLocally(x)){
+			if(!Modules.isContainedLocally(x)){
 				debug("cannot find module in compilation target files");
 				error("unknown local module: " + x, ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.start.getTokenSource().getSourceName());
 				LiquidErrorHandler.errors++;
@@ -411,7 +426,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 				debug("adding module name to module access order list");
 				modulesParsed.add("'" + x + "'");
 				if(!findDuplicatePattern(modulesParsed)) {
-					var mod = Main.parse(Objects.requireNonNull(ImportManager.getPathOfModule(x)));
+					var mod = Main.parse(Objects.requireNonNull(Modules.getPathOfModule(x)));
 					builder.importModule(mod, currentScope);
 				}
 			}

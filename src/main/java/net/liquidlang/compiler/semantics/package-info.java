@@ -1,5 +1,5 @@
 /**
- * This package provides classes that aid in semantic analysis, scope construction, and symbol table construction.<br>
+ * This package provides a class that aid in semantic analysis.<br>
  * Symbol tables are placed in the {@link net.liquidlang.compiler.model.Scope Scope} class, while the {@link net.liquidlang.compiler.semantics.SemanticAnalyzer SemanticAnalyzer}
  * validates code and scopes.
  */

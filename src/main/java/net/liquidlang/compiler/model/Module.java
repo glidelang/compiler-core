@@ -101,7 +101,7 @@ public class Module {
 			importedModules.add(module);
 			for(FParser.FunctionContext context : module.functions) {
 				// there are only public functions
-				scope.functionMap.put(FunctionDescriptor.from(module.name, context.IDENTIFIER().getText(), ObjectType.fromTypeContext(context.functionSignature().type()), context.functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), context);
+				scope.functionMap.put(FunctionDescriptor.from(module.name, context.IDENTIFIER().getText(), ObjectType.fromTypeContext(context.functionSignature().type()), context.func_modifiers(), context.functionSignature().formalParameterList().formalParameter().stream().map(formalParameterContext -> ObjectType.fromTypeContext(formalParameterContext.type())).toArray(ObjectType[]::new)), context);
 			}
 			return this;
 		}

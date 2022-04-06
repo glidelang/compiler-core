@@ -78,6 +78,16 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitFunctionSignature(FParser.FunctionSignatureContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FParser#parameterlessFunctionSignature}.
+	 * @param ctx the parse tree
+	 */
+	void enterParameterlessFunctionSignature(FParser.ParameterlessFunctionSignatureContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#parameterlessFunctionSignature}.
+	 * @param ctx the parse tree
+	 */
+	void exitParameterlessFunctionSignature(FParser.ParameterlessFunctionSignatureContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FParser#formalParameterList}.
 	 * @param ctx the parse tree
 	 */
@@ -97,6 +107,16 @@ public interface FParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFormalParameter(FParser.FormalParameterContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#typeList}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeList(FParser.TypeListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#typeList}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeList(FParser.TypeListContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FParser#value}.
 	 * @param ctx the parse tree
@@ -208,6 +228,16 @@ public interface FParserListener extends ParseTreeListener {
 	 */
 	void exitFunctionValue(FParser.FunctionValueContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FParser#closure}.
+	 * @param ctx the parse tree
+	 */
+	void enterClosure(FParser.ClosureContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#closure}.
+	 * @param ctx the parse tree
+	 */
+	void exitClosure(FParser.ClosureContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FParser#type}.
 	 * @param ctx the parse tree
 	 */
@@ -227,6 +257,16 @@ public interface FParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMethodCall(FParser.MethodCallContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FParser#valuedMethodCall}.
+	 * @param ctx the parse tree
+	 */
+	void enterValuedMethodCall(FParser.ValuedMethodCallContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FParser#valuedMethodCall}.
+	 * @param ctx the parse tree
+	 */
+	void exitValuedMethodCall(FParser.ValuedMethodCallContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FParser#assignment}.
 	 * @param ctx the parse tree

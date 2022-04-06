@@ -53,6 +53,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionSignature(FParser.FunctionSignatureContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#parameterlessFunctionSignature}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParameterlessFunctionSignature(FParser.ParameterlessFunctionSignatureContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#formalParameterList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -64,6 +70,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFormalParameter(FParser.FormalParameterContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#typeList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeList(FParser.TypeListContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FParser#value}.
 	 * @param ctx the parse tree
@@ -131,6 +143,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionValue(FParser.FunctionValueContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FParser#closure}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClosure(FParser.ClosureContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -142,6 +160,12 @@ public interface FParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitMethodCall(FParser.MethodCallContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FParser#valuedMethodCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValuedMethodCall(FParser.ValuedMethodCallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FParser#assignment}.
 	 * @param ctx the parse tree
