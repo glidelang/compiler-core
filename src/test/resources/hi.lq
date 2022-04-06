@@ -1,11 +1,3 @@
-pub inline func hi() -> u32 {
-    return 1;
-}
-
-pub inline func hi() -> u16 {
-    return 1;
-}
-
-pub inline func hi() -> u8 {
+pub inline func hi() -> i32 {
     return 1;
 }

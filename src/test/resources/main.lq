@@ -1,6 +1,5 @@
 /*
- *  THIS PROGRAM IS DESIGNED TO NOT BE A PROGRAM
- *  IT IS SUPPOSED TO FAIL
+ *  THIS PROGRAM IS DESIGNED TO WORK
  */
 
 import mod::hello;
@@ -9,10 +8,13 @@ import mod::hi;
 // pub inline func stringFn(s: str) {}
 pub inline func stringFn(s: str) -> str { return "YES"; }
 pub unsafe func fn(l: i32) -> u32 {
-    return l;
+    return u32(l);
 }
-pub unsafe func fn2(l: i32?) -> u32 {
-    return l;
+pub func fn2(l: i32?) -> u32 {
+    return u32(l!);
+}
+pub func fn3$(l: bool?) -> func(str) {
+    return func(x: str){};
 }
 
 // yeah boi
@@ -31,10 +33,12 @@ pub func main(l: str) {
             let x2: str? = "500";
             let y2: i32? = i32?(x2);
             fn2(null!);
+            fn3$("null"~);
             let mut a: str? = null;
             a = stringFn->str("no");
             let mut b = x2~;
             b = false;
             hello();
+            let closure: func(i32, i32) -> void = func main(str);
     }
 }

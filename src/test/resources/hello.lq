@@ -1,7 +1,6 @@
 import mod::x::hi;
 
-pub inline func hello() -> u32? {
-    hi->u32();
-    hi->u16();
+pub inline func hello() -> i32? {
+    hi();
     return 1;
 }
