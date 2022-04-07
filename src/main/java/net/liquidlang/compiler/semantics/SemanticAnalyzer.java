@@ -248,6 +248,7 @@ public class SemanticAnalyzer extends FParserBaseListener {
 		}
 
 		debug("resolved function call '" + ctx.getText() + "' as " + fun);
+		debug("found from closure: " + (ctx.valuedMethodCall() != null));
 		if(Objects.requireNonNull(fun).getModifiers().stream().map(RuleContext::getText).collect(Collectors.joining()).contains("unsafe")) {
 			debug("function call '" + fun + "' is unsafe");
 			debug("checking if it is in an unsafe block");
@@ -260,7 +261,9 @@ public class SemanticAnalyzer extends FParserBaseListener {
 			}
 		}
 		var formalList = fun.getParameterTypes();
-		List<ObjectType> passedList = ctx.passedParameterList() != null ? ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList() : Collections.emptyList();
+		List<ObjectType> passedList = ctx.valuedMethodCall() == null
+				? (ctx.passedParameterList() != null ? ctx.passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList() : Collections.emptyList())
+				: (ctx.valuedMethodCall().passedParameterList() != null ? ctx.valuedMethodCall().passedParameterList().valueExpr().stream().map(c -> SymbolUtils.typeCheckAndInference(c, ctx, currentScope)).toList() : Collections.emptyList());
 		debug("verifying function signature correspondence");
 		if(formalList.size() != passedList.size()) {
 			debug("differing parameter count; reporting error");
